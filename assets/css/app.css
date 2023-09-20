@@ -1,0 +1,42 @@
+html {
+    font-size: 35px;
+}
+
+@media only screen and (max-width: 768px) {
+  html {
+    font-size: 25px;
+  }
+}
+
+@media only screen and (max-width: 320px) {
+  html {
+    font-size: 12px;
+  }
+}
+
+.color-white {color: white !important;}
+.color-red {color: red !important;}
+.color-orange {color: orange !important;}
+.color-green {color: green !important;}
+.color-silver {color: silver !important;}
+.color-555 {color: #555 !important;}
+
+.bg-777 {background-color: #777 !important;}
+.bg-555 {background-color: #555 !important;}
+.bg-333 {background-color: #333 !important;}
+
+.statut {background-color: white; padding: 26px; text-align: center; border-radius: 5px; width: 240px;}
+
+.sd-title {
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.top-bar {background-color: white; color: #007bff; border: solid 1px silver; border-radius: 10px;}
+
+.overflow-hidden {overflow: hidden;}
+
+a[disabled] {
+  pointer-events: none;
+}
+

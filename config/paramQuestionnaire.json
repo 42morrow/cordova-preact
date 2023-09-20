@@ -1,0 +1,67 @@
+{
+    "locale": "fr",
+    "title": {
+        "fr": "Bon d'intervention"
+    },
+    "logoPosition": "right",
+    "pages": [
+        {
+            "name": "page1",
+            "elements": [
+                {
+                    "type": "text",
+                    "name": "heure_debut",
+                    "title": "Heure début intervention",
+                    "isRequired": true,
+                    "inputType": "time"
+                },
+                {
+                    "type": "text",
+                    "name": "heure_fin",
+                    "title": "Heure fin intervention",
+                    "isRequired": true,
+                    "inputType": "time"
+                },
+                {
+                    "type": "text",
+                    "name": "nombre1",
+                    "title": {
+                        "fr": "Nombre 1"
+                    },
+                    "isRequired": true,
+                    "inputType": "number"
+                },
+                {
+                    "type": "text",
+                    "name": "nombre2",
+                    "title": {
+                        "fr": "Nombre 2"
+                    },
+                    "isRequired": true,
+                    "inputType": "number"
+                },
+                {
+                    "type": "expression",
+                    "name": "question2",
+                    "title": {
+                        "fr": "Calcul = nombre 1 * nombre 2"
+                    },
+                    "expression": "{nombre1}*{nombre2}"
+                },
+                {
+                    "type": "comment",
+                    "name": "commentaire",
+                    "title": "Commentaire",
+                    "isRequired": true
+                },
+                {
+                    "type": "signaturepad",
+                    "name": "signature",
+                    "title": "Signature du responsable",
+                    "isRequired": true,
+                    "requiredErrorText": "Ce champ est obligatoire"
+                }
+            ]
+        }
+    ]
+}
