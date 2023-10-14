@@ -54,21 +54,21 @@ console.log(statutsIntervention);
                     <div class="badge badge-secondary mb-1">{uneDate}</div>
                     {interventions[uneDate].map(intervention  => (
                         <Link class={`btn  ${statutsIntervention[intervention.statut].class} w-100 p-3 mb-2`} href={'/intervention/'+salonSlug+"/"+intervention.id}>
-                            <div class="">
-                                <div class="float-left text-left">
+                            <div class="row">
+                                <div class="col-md-8 text-left mb-2">
                                     <div>{intervention.heure}</div>
                                     <div>{intervention.societe}</div>
                                 </div>
-                                <div class="float-right">
-                                    <div class={`statut ${statutsIntervention[intervention.statut].couleur}`}>
+                                <div class="col-md-4">
+                                    <div class={`statut w-100 ${statutsIntervention[intervention.statut].couleur}`}>
                                         {statutsIntervention[intervention.statut].libelle}
                                     </div>
                                 </div>
                             </div>
 
                                 {!!(intervention.signature != null) ?
-                                    <div class="" style="clear: both; text-align: left; font-size: 7px;">
-                                        <img src={intervention.signature} />
+                                    <div class="mt-2 ">
+                                        <img src={intervention.signature} width="100" />
                                     </div>
                                 :
                                     ''
