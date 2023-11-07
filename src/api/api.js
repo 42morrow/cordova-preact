@@ -14,12 +14,12 @@ function fetchCollection(path) {
 }
 
 export function apiGetSalons() {
-    let collection = fetchCollection('salons');
+    let collection = fetchCollection('get-salons');
     return collection;
 }
 
 export function apiGetInterventionsSalon(salonSlug) {
-    let collection = fetchCollection('interventions/'+salonSlug);
+    let collection = fetchCollection('get-interventions/'+salonSlug);
     return collection;
 }
 
