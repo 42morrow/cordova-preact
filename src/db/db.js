@@ -1,4 +1,5 @@
-import {newPromiseHelper} from 'sql-promise-helper';
+import { newPromiseHelper } from 'sql-promise-helper';
+import { dbTables } from '../config/dbTables';
 
 var db = null;
 var helper = null;
@@ -6,12 +7,8 @@ var tx = null;
 
 document.addEventListener('deviceready', function() {
 
-    console.log(" =====================> DEVICE READY !");
-
     db = openDb();
     helper = newPromiseHelper(db);
-    // TODO : transférer interventions signées au préalable
-    createTablesIfNotExist();
 
 });
 
@@ -23,11 +20,11 @@ function openDb() {
     });
 }
 
-function dropTableIfExist() {
+function dropTableIfExist(table) {
 
     console.log("dropTableIfExist");
 
-    let dropTableInterventionQuery = 'DROP TABLE IF EXISTS intervention';
+    let dropTableInterventionQuery = 'DROP TABLE IF EXISTS '+table;
 
     tx = helper.newBatchTransaction();
     tx.executeStatement(dropTableInterventionQuery);
@@ -35,35 +32,45 @@ function dropTableIfExist() {
 
 }
 
-function createTablesIfNotExist() {
+export function showTables() {
 
-    console.log("createTablesIfNotExist");
+    console.log("showTables");
 
-    //dropTableIfExist();
-    let createTableInterventionQuery =
-    'CREATE TABLE IF NOT EXISTS intervention ('
-    +'id INTEGER PRIMARY KEY AUTOINCREMENT, '
-    +'roid TEXT NOT NULL, '
-    +'salon TEXT NOT NULL, '
-    +'salon_slug TEXT NOT NULL, '
-    +'societe TEXT NOT NULL, '
-    +'date TEXT NOT NULL, '
-    +'date_fr TEXT NOT NULL, '
-    +'heure TEXT NOT NULL, '
-    +'statut TEXT NOT NULL, '
-    +'heure_rea_debut TEXT NULL, '
-    +'heure_rea_fin TEXT NULL, '
-    +'signature TEXT NULL, '
-    +'maj_local TEXT NOT NULL, '
-    +'maj_remote TEXT NOT NULL'
-    +')'
-    ;
+    let query = 'SELECT * FROM sqlite_master where type="table";';
 
     tx = helper.newBatchTransaction();
-    tx.executeStatement(createTableInterventionQuery);
+    return tx.commit().then(function() {
+        return helper.executeStatement(query, null);
+    }).then(function(res) {
+        return new Promise( (resolve) => resolve(res.rows));
+
+    });
+
+}
+
+export function createTables() {
+
+    console.log("createTables");
+
+    return createTable("intervention", dbTables.intervention)
+    .then( () => createTable("user", dbTables.user))
+    ;
+
+}
+
+
+function createTable(table, createTablesQuery) {
+
+    console.log("createTables");
+
+    //dropTableIfExist(table);
+
+    tx = helper.newBatchTransaction();
+    tx.executeStatement(createTablesQuery);
     return tx.commit();
 
 }
+
 
 export function insertRows (table, rows) {
 
@@ -79,6 +86,7 @@ export function insertRows (table, rows) {
     */
 
     console.log("DANS INSERT, ROWS: "+rows.length);
+
     if(rows.length == 0) {
         return;
     }
@@ -122,6 +130,18 @@ export function deleteIds (table, ids) {
 }
 
 
+export function deleteAll(table) {
+
+    let deleteQuery = 'DELETE FROM '+table;
+
+    tx = helper.newBatchTransaction();
+    tx.executeStatement(deleteQuery);
+
+    return tx.commit();
+
+}
+
+
 export function update (table, id, data) {
 
     let updateQuery = 'UPDATE '+table+' SET ';
@@ -139,29 +159,35 @@ export function update (table, id, data) {
 }
 
 
+export function getRows(table) {
+
+    tx = helper.newBatchTransaction();
+    return tx.commit().then(function() {
+        return helper.executeStatement('SELECT * FROM '+table, null);
+
+    }).then( res => res.rows);
+
+}
+
+
 export function dbGetSalons() {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT salon, salon_slug, COUNT(*) AS nb FROM intervention GROUP BY salon_slug', null);
+        return helper.executeStatement('SELECT salon, salon_id, COUNT(*) AS nb FROM intervention GROUP BY salon_id', null);
 
     }).then(function(res) {
         var salons = [];
         if(res.rows.length > 0) {
-            console.log(" =======================> IF: "+res.rows.length)
-            console.log(res.rows);
             for(let i = 0; i < res.rows.length; i++) {
                 salons.push({
                     nom: res.rows.item(i).salon,
-                    slug: res.rows.item(i).salon_slug,
+                    id: res.rows.item(i).salon_id,
                     nbInterventions: res.rows.item(i).nb,
                 });
                 console.log("dbGetSalons:");
                 console.log(salons);
             }
-        }
-        else {
-            console.log(" =======================> RESULT + ZÉRO")
         }
 
         return new Promise( (resolve) => resolve(salons));
@@ -171,23 +197,23 @@ export function dbGetSalons() {
 }
 
 
-export function dbGetSalon(salonSlug) {
+export function dbGetSalon(salonId) {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT salon, salon_slug, COUNT(*) AS nb FROM intervention WHERE salon_slug = ? GROUP BY salon_slug', [salonSlug]);
+        return helper.executeStatement('SELECT salon, salon_id, COUNT(*) AS nb FROM intervention WHERE salon_id = ? GROUP BY salon_id', [salonId]);
     }).then(function(res) {
 
         let salon = {
             nom: '',
-            slug: '',
+            id: '',
             nbInterventions: 0,
         };
 
         if(res.rows.length == 1) {
             salon = {
                 nom: res.rows.item(0).salon,
-                slug: res.rows.item(0).salon_slug,
+                id: res.rows.item(0).salon_id,
                 nbInterventions: res.rows.item(0).nb,
             };
             console.log("dbGetSalon:");
@@ -210,15 +236,9 @@ export function dbGetInterventions(interventionsApi) {
     }).then(function(res) {
         var interventionsDb = [];
         if(res.rows.length > 0) {
-            console.log(" =======================> IF: "+res.rows.length)
-            console.log(res.rows);
             for(let i = 0; i < res.rows.length; i++) {
                interventionsDb.push(res.rows.item(i));
-                console.log("Get intervention from DB: "+res.rows.item(i).id+" : "+res.rows.item(i).date_fr);
             }
-        }
-        else {
-            console.log(" =======================> RESULT + ZÉRO")
         }
 
         return new Promise( (resolve) => resolve({interventionsDb, interventionsApi}));
@@ -228,23 +248,18 @@ export function dbGetInterventions(interventionsApi) {
 }
 
 
-export function dbGetInterventionsSalon(salonSlug) {
+export function dbGetInterventionsSalon(salonId) {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT * FROM intervention WHERE salon_slug = ?', [salonSlug]);
+        return helper.executeStatement('SELECT * FROM intervention WHERE salon_id = ?', [salonId]);
 
     }).then(function(res) {
         var interventions = [];
         if(res.rows.length > 0) {
-            console.log(" =======================> dbGetInterventionsSalon: "+res.rows.length)
-            console.log(res.rows);
             for(let i = 0; i < res.rows.length; i++) {
                 interventions.push(res.rows.item(i));
             }
-        }
-        else {
-            console.log(" =======================> dbGetInterventionsSalon: auncune intervention")
         }
 
         return new Promise( (resolve) => resolve(interventions));
@@ -259,23 +274,19 @@ export function dbGetInterventionsATransferer() {
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
         return helper.executeStatement('SELECT * FROM intervention WHERE statut = ?', ['signeeatransferer']);
-
     }).then(function(res) {
         var interventions = [];
         if(res.rows.length > 0) {
-            console.log(" =======================> dbGetInterventionsATransferer: "+res.rows.length)
-            console.log(res.rows);
             for(let i = 0; i < res.rows.length; i++) {
                 interventions.push(res.rows.item(i));
             }
         }
-        else {
-            console.log(" =======================> dbGetInterventionsATransferer: auncune intervention")
-        }
 
         return new Promise( (resolve) => resolve(interventions));
 
-    });
+    })
+    .catch( error => { console.log("IN dbGetInterventionsATransferer CATCH ERROR"); console.log(error); } )
+    ;
 
 }
 
@@ -291,6 +302,29 @@ export function dbGetIntervention(interventionId) {
     });
 
 }
+
+
+export function dbGetUser() {
+
+    let user = null;
+
+    tx = helper.newBatchTransaction();
+    return tx.commit().then(function() {
+        return helper.executeStatement('SELECT * FROM user', null);
+
+    }).then(function(res) {
+        let user = res.rows.length > 0 ? res.rows.item(0) : null;
+        return new Promise( (resolve) => resolve(user));
+    });
+
+}
+
+
+export function dbSetUser() {
+
+}
+
+
 
 
 

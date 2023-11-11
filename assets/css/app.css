@@ -1,18 +1,20 @@
-html {
+html, body {
     font-size: 35px;
 }
 
 @media only screen and (max-width: 768px) {
-  html {
+  html, body {
     font-size: 25px;
   }
 }
 
 @media only screen and (max-width: 320px) {
-  html {
+  html, body {
     font-size: 12px;
   }
 }
+
+a:hover {text-decoration: none;}
 
 .color-white {color: white !important;}
 .color-red {color: red !important;}
@@ -20,6 +22,15 @@ html {
 .color-green {color: green !important;}
 .color-silver {color: silver !important;}
 .color-555 {color: #555 !important;}
+.color-777 {color: #777 !important;}
+
+.hover-white:hover {color: white !important;}
+.hover-red:hover {color: red !important;}
+.hover-orange:hover {color: orange !important;}
+.hover-green:hover {color: green !important;}
+.hover-silver:hover {color: silver !important;}
+.hover-555:hover {color: #555 !important;}
+.hover-777:hover {color: #777 !important;}
 
 .bg-777 {background-color: #777 !important;}
 .bg-555 {background-color: #555 !important;}
@@ -39,4 +50,44 @@ html {
 a[disabled] {
   pointer-events: none;
 }
+
+.font-size-3vw { font-size: 3vw; }
+.text-8px { font-size: 8px; }
+.text-12px { font-size: 12px; }
+
+.monospace {
+  font-family: monospace;
+}
+
+.wrapper {
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100%;
+}
+
+* {
+  box-sizing: inherit;
+}
+
+section {
+  height: 100%;
+}
+
+footer {
+  padding: 5px;
+  border-top: solid 1px #eee;
+  color: silver;
+}
+
+.border-top-none {border-top: none !important;}
+
 

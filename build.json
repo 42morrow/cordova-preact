@@ -1,0 +1,12 @@
+{
+    "android": {
+        "release": {
+            "keystore": "/var/www/html/42morrowWebs/BVP/cordova-preact/keystore/my-release-key.keystore",
+            "storePassword": "Codets01",
+            "alias": "my_keystore_alias",
+            "password" : "Codets01",
+            "keystoreType": "",
+            "packageType": "apk"
+        }
+    }
+}

@@ -1,40 +1,53 @@
 import {h} from 'preact';
 import {useState, useEffect} from 'preact/hooks';
-import {Link} from 'preact-router';
+import {Link, route} from 'preact-router';
 
 import {dbGetInterventionsSalon, dbGetSalon} from '../db/db';
 import {statutsIntervention} from '../config/statutsIntervention';
 
-export default function Interventions({salonSlug}) {
+export default function Interventions({user, salonId, synchroInterventionsDone}) {
 
-    console.log("IN INTERVENTIONS, salonSlug:: "+salonSlug);
-console.log("statutsIntervention");
-console.log(statutsIntervention);
+    console.log("IN INTERVENTIONS, salonId:: "+salonId);
+
+    if(user == null) {
+        route('/user');
+    }
+
 
     const [salon, setSalon] = useState(null);
     const [interventions, setInterventions] = useState(null);
+    const [salonNbInterventions, setSalonNbInterventions] = useState(0);
+
 
     useEffect(() => {
         console.log("useEffect setSalon");
-        dbGetSalon(salonSlug).then( (salon) => { console.log(salon); setSalon(salon); } );
+        dbGetSalon(salonId).then( (salon) => { console.log(salon); setSalon(salon); } );
     }, []);
+
 
     useEffect(() => {
         console.log("useEffect setInterventions");
-        dbGetInterventionsSalon(salonSlug).then( (interventions) => {
-            console.log(interventions);
+        dbGetInterventionsSalon(salonId).then( (interventionsDuSalon) => {
+            setSalonNbInterventions(interventionsDuSalon.length);
+            console.log(interventionsDuSalon);
             let interventionsParDate = {};
-            interventions.map( intervention => {
-                if(!interventionsParDate.hasOwnProperty(intervention.date_fr)) {
-                    interventionsParDate[intervention.date_fr] = [];
+            interventionsDuSalon.map( intervention => {
+                if(!interventionsParDate.hasOwnProperty(intervention.date)) {
+                    interventionsParDate[intervention.date] = [];
                 }
-                interventionsParDate[intervention.date_fr].push(intervention);
+                interventionsParDate[intervention.date].push(intervention);
             });
-            console.log("interventionsParDate:");
-            console.log(interventionsParDate);
-            setInterventions(interventionsParDate);
+            const interventionsParDateOrdonnee = Object.keys(interventionsParDate).sort().reduce(
+                (obj, key) => {
+                  obj[key.split("-").reverse().join("/")] = interventionsParDate[key];
+                  return obj;
+                },
+                {}
+            );
+            setInterventions(interventionsParDateOrdonnee);
         });
-    }, []);
+    }, [synchroInterventionsDone]);
+
 
 
     if(!interventions || !salon) {
@@ -45,19 +58,25 @@ console.log(statutsIntervention);
 
     return (
         <div>
-            <Link className="btn btn-secondary w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+salonSlug}>
-                {salon.nom}
+            <Link className="btn btn-dark w-100 p-3 mb-2 text-uppercase" href="/index.html">
+                Salons
+            </Link>
+            <Link className="btn btn-secondary w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+salonId}>
+                {salon.nom} ({salonNbInterventions})
             </Link>
             {!!(interventions && Object.keys(interventions).length > 0) ?
             Object.keys(interventions).map( (uneDate) => (
                 <div>
                     <div class="badge badge-secondary mb-1">{uneDate}</div>
                     {interventions[uneDate].map(intervention  => (
-                        <Link class={`btn  ${statutsIntervention[intervention.statut].class} w-100 p-3 mb-2`} href={'/intervention/'+salonSlug+"/"+intervention.id}>
+                        <Link
+                            class={`btn  ${statutsIntervention[intervention.statut].class} w-100 p-3 mb-2`}
+                            href={'/intervention/'+salonId+"/"+salonNbInterventions+"/"+intervention.id}
+                        >
                             <div class="row">
                                 <div class="col-md-8 text-left mb-2">
-                                    <div>{intervention.heure}</div>
-                                    <div>{intervention.societe}</div>
+                                    {/* <div>{intervention.heure}</div> */}
+                                    <div>{intervention.client}</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class={`statut w-100 ${statutsIntervention[intervention.statut].couleur}`}>

@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {h, render} from 'preact';
-import {Router, Link, Route} from 'preact-router';
+import {Router, Link, route} from 'preact-router';
 import {useState, useEffect} from 'preact/hooks';
 import $ from 'jquery';
 import Popper from 'popper.js';
@@ -25,14 +25,25 @@ import '../assets/fontawesome/webfonts/fa-solid-900.ttf';
 import '../assets/fontawesome/webfonts/fa-solid-900.woff';
 import '../assets/fontawesome/webfonts/fa-solid-900.woff2';
 
+import UserStatus from './components/userStatus';
 import Connexion from './components/connexion';
+import Footer from './components/footer';
+import User from './pages/user';
 import Salons from './pages/salons';
 import Interventions from './pages/interventions';
 import Intervention from './pages/intervention';
+import Dump from './pages/dump';
+
+import { createTables, dbGetUser } from './db/db';
+
+import {synchroInterventions} from './lib/synchroInterventions';
 
 export var testAppState = false;
 
 function App() {
+
+
+    const [syncIsFinished, setSyncIsFinished] = useState(true);
 
     function changeSyncIsFinished(syncIsFinished) {
         console.log("changeSyncIsFinished");
@@ -45,9 +56,6 @@ function App() {
     }
 
     const [btnSyncIsClicked, setBtnSyncIsClicked] = useState(false);
-    const [syncIsFinished, setSyncIsFinished] = useState(true);
-
-    const [statutConnexionForDisplay, setStatutConnexionForDisplay] = useState(navigator.onLine);
     const [callSync, setCallSync] = useState(false);
 
     useEffect(() => {
@@ -61,6 +69,10 @@ function App() {
         }
     }, [btnSyncIsClicked]);
 
+
+    // STATUT CONNEXION (DISPLAY ON TOP RIGHT)
+
+    const [statutConnexionForDisplay, setStatutConnexionForDisplay] = useState(navigator.onLine);
 
     useEffect(() => {
 
@@ -83,24 +95,83 @@ function App() {
 
     }, [statutConnexionForDisplay]);
 
+
+    // SYNCHRO INTERVENTIONS + GET USER
+
+    const [synchroInterventionsDone, setSynchroInterventionsDone] = useState(false);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+
+        console.log("synchroInterventionsDone useEffect");
+        console.log("statutConnexionForDisplay: "+(statutConnexionForDisplay ? "oui" : "non"));
+
+        if(statutConnexionForDisplay) {
+
+            changeSyncIsFinished(false);
+
+            synchroInterventions()
+            .then( () => {
+                setSynchroInterventionsDone(true);
+                changeSyncIsFinished(true);
+            } )
+            .then( () => {
+                setSynchroInterventionsDone(false);
+                route('/index.html');
+            } )
+            .catch( (error) => { console.log("CATCH ERROR"); console.log(error); })
+            ;
+
+        }
+        else {
+            setSynchroInterventionsDone(false);
+        }
+
+    }, [statutConnexionForDisplay, callSync]);
+
+
+
+    const [updateUser, setUpdateUser] = useState(false);
+
+    useEffect(() => {
+
+        console.log("user useEffect");
+
+        createTables().then( () => dbGetUser().then( user => {
+            setUpdateUser(false);
+            setUser(user);
+            if(user == null) {
+                route('/user');
+            }
+        }));
+
+    }, [updateUser]);
+
+
+    function callUpdateUser() {
+        setUpdateUser(true);
+    }
+
+
     return (
-        <div class="p-1">
+        <div class="p-1 wrapper">
             <div class="top-bar overflow-hidden p-1 mb-2">
-                <div class="float-left">
+                <div class="float-left pl-1 pt-1">
+                    <UserStatus user={user} statutConnexionForDisplay={statutConnexionForDisplay} />
                 </div>
                 <div class="float-right pl-1 pt-1">
                     <Connexion statutConnexionForDisplay={statutConnexionForDisplay} btnSyncClick={btnSyncClick} syncIsFinished={syncIsFinished} />
                 </div>
             </div>
-            <Link className="btn btn-dark w-100 p-3 mb-2 text-uppercase" href="/index.html">
-                Salons
-            </Link>
             <Router>
-                <Salons statutConnexionForDisplay={statutConnexionForDisplay} callSync={callSync} changeSyncIsFinished={changeSyncIsFinished} path="/" />
-                <Salons statutConnexionForDisplay={statutConnexionForDisplay} callSync={callSync} changeSyncIsFinished={changeSyncIsFinished} path="/index.html" />
-                <Interventions path="/interventions/:salonSlug" />
-                <Intervention path="/intervention/:salonSlug/:interventionId" />
+                <User user={user} callUpdateUser={callUpdateUser} path="/user" />
+                <Salons user={user} synchroInterventionsDone={synchroInterventionsDone} path="/" />
+                <Salons user={user} synchroInterventionsDone={synchroInterventionsDone} path="/index.html" />
+                <Interventions user={user} synchroInterventionsDone={synchroInterventionsDone} path="/interventions/:salonId" />
+                <Intervention user={user} path="/intervention/:salonId/:salonNbInterventions/:interventionId" />
+                <Dump path="/dump" />
             </Router>
+            <Footer />
         </div>
     )
 }

@@ -4,7 +4,7 @@ import $ from 'jquery';
 
 export default function Connexion({statutConnexionForDisplay, btnSyncClick, syncIsFinished}) {
 
-    console.log("IN CONNEXION");
+    console.log("IN COMPONENT CONNEXION");
 
     function refresh() {
         console.log("refresh");

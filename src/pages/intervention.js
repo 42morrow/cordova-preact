@@ -11,9 +11,14 @@ import {apiSetInterventions} from '../api/api';
 
 import paramQuestionnaire from '../../config/paramQuestionnaire.json';
 
-export default function Intervention({salonSlug, interventionId}) {
+export default function Intervention({user, salonId, salonNbInterventions, interventionId}) {
 
-    console.log("IN INTERVENTION, interventionId:: "+interventionId);
+    console.log("IN INTERVENTION, interventionId:: "+interventionId+", salonNbInterventions: "+salonNbInterventions);
+
+    if(user == null) {
+        route('/user');
+    }
+
 
     const [intervention, setIntervention] = useState(null);
 
@@ -21,6 +26,7 @@ export default function Intervention({salonSlug, interventionId}) {
         console.log("Intervention useEffect setIntervention");
         dbGetIntervention(interventionId).then( (intervention) => { console.log(intervention); setIntervention(intervention); } );
     }, []);
+
 
     useEffect(() => {
 
@@ -55,8 +61,8 @@ export default function Intervention({salonSlug, interventionId}) {
                 };
                 update('intervention', interventionId, dbFields);
             })
-            .then( () => { console.log("ROUTE AFTER SUCCESS + UPDATE"); route('/interventions/'+salonSlug); } )
-            .catch( () => { console.log("ERROR + ROUTE"); route('/interventions/'+salonSlug); } )
+            .then( () => { console.log("ROUTE AFTER SUCCESS + UPDATE"); route('/interventions/'+salonId); } )
+            .catch( () => { console.log("ERROR + ROUTE"); route('/interventions/'+salonId); } )
             ;
         });
 
@@ -64,14 +70,18 @@ export default function Intervention({salonSlug, interventionId}) {
 
     }, [intervention]);
 
+
     if(!intervention) {
         return <div className="text-center p-3">Veuillez patienter</div>
     }
 
     return (
         <div>
-            <Link className="btn btn-secondary w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+intervention.salon_slug}>
-                {intervention.salon}
+            <Link className="btn btn-dark w-100 p-3 mb-2 text-uppercase" href="/index.html">
+                Salons
+            </Link>
+            <Link className="btn btn-secondary w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+intervention.salon_id}>
+                {intervention.salon} ({salonNbInterventions})
             </Link>
             <Link className="btn btn-primary color-white w-100 p-3 mb-2 text-uppercase" href={'/intervention/'+interventionId}>
                 {intervention.date_fr} {intervention.heure} {intervention.societe}
