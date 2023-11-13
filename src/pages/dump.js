@@ -12,6 +12,7 @@ export default function Dump() {
     const [dbTables, setDbTables] = useState([]);
     const [dbInterventions, setDbInterventions] = useState([]);
     const [dbUsers, setDbUsers] = useState([]);
+    const [dbSurveyjsConfig, setDbSurveyjsConfig] = useState([]);
     const [update, setUpdate] = useState(false);
 
     useEffect(() => {
@@ -47,7 +48,17 @@ export default function Dump() {
              }
              setDbUsers(users);
           })
-         ;
+          .then( () => getRows("surveyjs_config") )
+          .then( rows => {
+              let surveyjsConfig = [];
+              if(rows.length > 0) {
+                  for(let i = 0; i < rows.length; i++) {
+                    surveyjsConfig.push(rows.item(i));
+                  }
+              }
+              setDbSurveyjsConfig(surveyjsConfig);
+           })
+          ;
     }, [update]);
 
     return (
@@ -73,6 +84,14 @@ export default function Dump() {
                 dbUsers.map( (user) => (
                     <div class="mt-3">
                         {Object.keys(user).map( (donnee) => ( <div class="text-8px monospace"><span class="color-silver mr- 2">{donnee}</span> {user[donnee]}</div> ) ) }
+                    </div>
+                ))
+            }
+            <div class="font-weight-bold text-12px mt-4">Surveyjs Config : {dbSurveyjsConfig.length}</div>
+            {
+                dbSurveyjsConfig.map( (config) => (
+                    <div class="mt-3">
+                        {Object.keys(config).map( (donnee) => ( <div class="text-8px monospace"><span class="color-silver mr- 2">{donnee}</span> {config[donnee]}</div> ) ) }
                     </div>
                 ))
             }

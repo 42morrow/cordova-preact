@@ -60,7 +60,7 @@ export default function User({user, callUpdateUser}) {
                     </div>
 
                     <div class="form-inline mb-2">
-                        <button type="button" onClick={login} class="btn btn-primary pl-5 pr-5">Valider</button>
+                        <button type="button" onClick={login} class="btn btn-client-primary pl-5 pr-5">Valider</button>
                     </div>
 
                     <div id="error" class="color-red"></div>

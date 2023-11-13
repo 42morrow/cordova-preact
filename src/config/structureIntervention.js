@@ -7,12 +7,14 @@ export const structureIntervention = {
     date: {index: 5},
     date_fr: {index: 6},
     //heure: {index: 7},
-    statut: {index: 7},
-    heure_rea_debut: {index: 8},
-    heure_rea_fin: {index: 9},
-    signature: {index: 10},
-    maj_local: {index: 11},
-    maj_remote: {index: 12},
+    type: {index: 7},
+    typeLabel: {index: 8},
+    statut: {index: 9},
+    heure_rea_debut: {index: 10},
+    heure_rea_fin: {index: 11},
+    signature: {index: 12},
+    maj_local: {index: 13},
+    maj_remote: {index: 14},
 };
 
 

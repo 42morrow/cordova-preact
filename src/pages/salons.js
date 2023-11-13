@@ -10,10 +10,10 @@ import {dbGetSalons, dbGetInterventions, dbGetInterventionsATransferer, update, 
 
 import {structureIntervention} from '../config/structureIntervention';
 
-export default function Salons({user, synchroInterventionsDone}) {
+export default function Salons({user, synchroDone}) {
 
-    console.log("IN SALONS, synchroInterventionsDone:");
-    console.log(synchroInterventionsDone);
+    console.log("IN SALONS, synchroDone:");
+    console.log(synchroDone);
 
     if(user == null) {
         route('/user');
@@ -31,7 +31,7 @@ export default function Salons({user, synchroInterventionsDone}) {
 
         dbGetSalons().then( (salons) => { console.log("salons:"); console.log(salons); setSalons(salons); } );
 
-    }, [synchroInterventionsDone]);
+    }, [synchroDone]);
 
 
     return (
@@ -40,7 +40,7 @@ export default function Salons({user, synchroInterventionsDone}) {
                 Salons
             </Link>
             {salons.map( (salon) => (
-                <Link className="btn btn-primary w-100 p-3 mb-2" href={'/interventions/'+salon.id}>
+                <Link className="btn btn-client-outline-primary w-100 p-3 mb-2" href={'/interventions/'+salon.id}>
                     {salon.nom} <span class="ml-2 color-silver">({salon.nbInterventions}) <span class="color-white ml-2" style="font-size: 7px;">{Date.now()}</span></span>
                 </Link>
             ))}

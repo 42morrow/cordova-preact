@@ -3,16 +3,16 @@ import {apiGetInterventions, apiSetInterventions} from '../api/api';
 
 import {structureIntervention} from '../config/structureIntervention';
 
-var synchroEncours = false;
+var synchroInterventionsEncours = false;
 
 export function synchroInterventions() {
 
-    if(synchroEncours) {
+    if(synchroInterventionsEncours) {
         console.log(" >>> SYNCHRO INTERVENTIONS::BYPASS");
         return Promise.resolve();
     }
     else {
-        synchroEncours = true;
+        synchroInterventionsEncours = true;
     }
 
     var interventionsASupprimer = [];
@@ -70,6 +70,8 @@ export function synchroInterventions() {
                 intervention.date,
                 intervention.dateFr,
                 //intervention.heure,
+                intervention.type,
+                intervention.typeLabel,
                 intervention.statut,
                 intervention.heureReaDebut,
                 intervention.heureReaFin,
@@ -95,7 +97,7 @@ export function synchroInterventions() {
                 interventionsACreer.push(interventionApi);
             }
             else {
-                    if(interventionApi[structureIntervention.statut.index] != 'afaire' // en théorie impossible car on envoie que les afaire
+                if(interventionApi[structureIntervention.statut.index] != 'afaire' // en théorie impossible car on envoie que les afaire
                 && interventionDb.statut != 'signeeatransferer'
                 && interventionDb.maj_local.substring(0, 9) != new Date().toISOString().substring(0, 9)
                 ) {
@@ -125,7 +127,7 @@ export function synchroInterventions() {
         return deleteIds('intervention', interventionsASupprimer);
     })
     .then( () => {
-        synchroEncours = false;
+        synchroInterventionsEncours = false;
         return Promise.resolve();
     })
     .catch( error => { console.log("IN SYNCHRO INTERVENTIONS CATCH ERROR"); console.log(error); } )

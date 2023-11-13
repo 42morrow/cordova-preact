@@ -54,6 +54,7 @@ export function createTables() {
 
     return createTable("intervention", dbTables.intervention)
     .then( () => createTable("user", dbTables.user))
+    .then( () => createTable("surveyjs_config", dbTables.surveyjs_config))
     ;
 
 }

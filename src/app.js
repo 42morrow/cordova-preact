@@ -37,6 +37,8 @@ import Dump from './pages/dump';
 import { createTables, dbGetUser } from './db/db';
 
 import {synchroInterventions} from './lib/synchroInterventions';
+import {synchroSurveyjsConfig} from './lib/synchroSurveyjsConfig';
+
 
 export var testAppState = false;
 
@@ -96,38 +98,44 @@ function App() {
     }, [statutConnexionForDisplay]);
 
 
-    // SYNCHRO INTERVENTIONS + GET USER
+    // SYNCHRO INTERVENTIONS + SYNCHRO SURVEYJS CONFIG + GET USER
 
-    const [synchroInterventionsDone, setSynchroInterventionsDone] = useState(false);
+    const [synchroDone, setSynchroDone] = useState(false);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
 
-        console.log("synchroInterventionsDone useEffect");
+        console.log("synchroDone useEffect");
         console.log("statutConnexionForDisplay: "+(statutConnexionForDisplay ? "oui" : "non"));
 
         if(statutConnexionForDisplay) {
 
-            changeSyncIsFinished(false);
+            if(user != null) {
+                changeSyncIsFinished(false);
 
-            synchroInterventions()
-            .then( () => {
-                setSynchroInterventionsDone(true);
-                changeSyncIsFinished(true);
-            } )
-            .then( () => {
-                setSynchroInterventionsDone(false);
-                route('/index.html');
-            } )
-            .catch( (error) => { console.log("CATCH ERROR"); console.log(error); })
-            ;
+                synchroInterventions()
+                .then( () => synchroSurveyjsConfig() )
+                .then( () => {
+                    setSynchroDone(true);
+                    changeSyncIsFinished(true);
+                } )
+                .then( () => {
+                    setSynchroDone(false);
+                    route('/index.html');
+                } )
+                .catch( (error) => { console.log("CATCH ERROR"); console.log(error); })
+                ;
+            }
+            else {
+                route('/user');
+            }
 
         }
         else {
-            setSynchroInterventionsDone(false);
+            setSynchroDone(false);
         }
 
-    }, [statutConnexionForDisplay, callSync]);
+    }, [statutConnexionForDisplay, callSync, user]);
 
 
 
@@ -143,6 +151,9 @@ function App() {
             if(user == null) {
                 route('/user');
             }
+            else {
+                route('/index.html');
+            }
         }));
 
     }, [updateUser]);
@@ -154,23 +165,25 @@ function App() {
 
 
     return (
-        <div class="p-1 wrapper">
-            <div class="top-bar overflow-hidden p-1 mb-2">
-                <div class="float-left pl-1 pt-1">
-                    <UserStatus user={user} statutConnexionForDisplay={statutConnexionForDisplay} />
+        <div class="p-1 wrapper" style="">
+            <div class="content">
+                <div class="top-bar p-1 mb-2">
+                    <div class="flex-1 pl-1 pt-1">
+                        <UserStatus user={user} statutConnexionForDisplay={statutConnexionForDisplay} />
+                    </div>
+                    <div class="pl-1 pt-1">
+                        <Connexion statutConnexionForDisplay={statutConnexionForDisplay} btnSyncClick={btnSyncClick} syncIsFinished={syncIsFinished} />
+                    </div>
                 </div>
-                <div class="float-right pl-1 pt-1">
-                    <Connexion statutConnexionForDisplay={statutConnexionForDisplay} btnSyncClick={btnSyncClick} syncIsFinished={syncIsFinished} />
-                </div>
+                <Router>
+                    <User user={user} callUpdateUser={callUpdateUser} path="/user" />
+                    <Salons user={user} synchroDone={synchroDone} path="/" />
+                    <Salons user={user} synchroDone={synchroDone} path="/index.html" />
+                    <Interventions user={user} synchroDone={synchroDone} path="/interventions/:salonId" />
+                    <Intervention user={user} path="/intervention/:salonId/:salonNbInterventions/:interventionId" />
+                    <Dump path="/dump" />
+                </Router>
             </div>
-            <Router>
-                <User user={user} callUpdateUser={callUpdateUser} path="/user" />
-                <Salons user={user} synchroInterventionsDone={synchroInterventionsDone} path="/" />
-                <Salons user={user} synchroInterventionsDone={synchroInterventionsDone} path="/index.html" />
-                <Interventions user={user} synchroInterventionsDone={synchroInterventionsDone} path="/interventions/:salonId" />
-                <Intervention user={user} path="/intervention/:salonId/:salonNbInterventions/:interventionId" />
-                <Dump path="/dump" />
-            </Router>
             <Footer />
         </div>
     )

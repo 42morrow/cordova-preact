@@ -23,6 +23,11 @@ export function apiGetInterventions() {
     return collection;
 }
 
+export function apiGetSurveyjsConfig() {
+    let collection = fetchCollection('surveyjs-config');
+    return collection;
+}
+
 export function apiSetInterventions(data) {
 
     return new Promise((resolve, reject) => {

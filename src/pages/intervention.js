@@ -5,6 +5,7 @@ import $ from 'jquery';
 
 import * as Survey from 'survey-jquery';
 import 'survey-jquery/defaultV2.css';
+import {surveyjsTheme} from '../config/surveyjsTheme';
 
 import {dbGetIntervention, update} from '../db/db';
 import {apiSetInterventions} from '../api/api';
@@ -33,6 +34,8 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
         console.log("Intervention useEffect init Survey");
 
         const survey = new Survey.Model(paramQuestionnaire);
+        survey.applyTheme(surveyjsTheme);
+
         survey.onComplete.add((sender, options) => {
             //console.log(JSON.stringify(sender.data, null, 3));
             let dbFields = {
@@ -68,6 +71,7 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
 
         $("#surveyElement").Survey({ model: survey });
 
+
     }, [intervention]);
 
 
@@ -80,12 +84,12 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
             <Link className="btn btn-dark w-100 p-3 mb-2 text-uppercase" href="/index.html">
                 Salons
             </Link>
-            <Link className="btn btn-secondary w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+intervention.salon_id}>
+            <Link className="btn btn-client-primary w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+intervention.salon_id}>
                 {intervention.salon} ({salonNbInterventions})
             </Link>
-            <Link className="btn btn-primary color-white w-100 p-3 mb-2 text-uppercase" href={'/intervention/'+interventionId}>
-                {intervention.date_fr} {intervention.heure} {intervention.societe}
-            </Link>
+            <div className="btn btn-client-primary pointer-events-none w-100 p-3 mb-2 text-uppercase">
+                {intervention.date_fr} {intervention.heure} - {intervention.client} -  {intervention.type}
+            </div>
             <div id="surveyElement"></div>
         </div>
     );

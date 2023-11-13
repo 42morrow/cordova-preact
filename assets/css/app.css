@@ -1,20 +1,65 @@
 html, body {
-    font-size: 35px;
+    font-size: 2vw;
 }
 
 @media only screen and (max-width: 768px) {
   html, body {
-    font-size: 25px;
+    font-size: 4vw;
   }
 }
 
-@media only screen and (max-width: 320px) {
-  html, body {
-    font-size: 12px;
-  }
-}
-
+a {color: inherit !important}
 a:hover {text-decoration: none;}
+
+a.btn-dark {color: white !important;}
+
+.btn-client-primary, .btn-client-primary-no-hover {
+  background-color: #e7001a !important;
+  color: white !important;
+  border: solid 1px #e7001a !important;
+}
+.btn-client-primary:hover  {
+  background-color: white !important;
+  color: #e7001a !important;
+}
+.btn-client-primary-no-hover:hover  {
+  background-color: #e7001a !important;
+  color: white !important;
+  border: solid 1px #e7001a !important;
+}
+
+
+.btn-client-outline-primary {
+  background-color: white !important;
+  color: #e7001a !important;
+  border: solid 1px #e7001a !important;
+}
+.btn-client-outline-primary:hover, .btn-client-outline-primary:focus  {
+  background-color: #e7001a !important;
+  color: white !important;
+}
+
+
+
+.btn-client-secondary {
+  background-color: white !important;
+  color: #555 !important;
+  border: solid 1px #555 !important;
+}
+.btn-client-secondary:hover  {
+  background-color: #ECECFF !important;
+}
+
+.btn-client-secondary-inverse {
+  background-color: #555 !important;
+  color: white !important;
+  border: solid 1px #555 !important;
+}
+.btn-client-secondary-inverse:hover  {
+  background-color: white !important;
+  color: #555 !important;
+}
+
 
 .color-white {color: white !important;}
 .color-red {color: red !important;}
@@ -23,6 +68,7 @@ a:hover {text-decoration: none;}
 .color-silver {color: silver !important;}
 .color-555 {color: #555 !important;}
 .color-777 {color: #777 !important;}
+.color-aaa {color: #aaa !important;}
 
 .hover-white:hover {color: white !important;}
 .hover-red:hover {color: red !important;}
@@ -31,19 +77,28 @@ a:hover {text-decoration: none;}
 .hover-silver:hover {color: silver !important;}
 .hover-555:hover {color: #555 !important;}
 .hover-777:hover {color: #777 !important;}
+.hover-aaa:hover {color: #aaa !important;}
 
 .bg-777 {background-color: #777 !important;}
 .bg-555 {background-color: #555 !important;}
 .bg-333 {background-color: #333 !important;}
 
-.statut {background-color: white; padding: 26px; text-align: center; border-radius: 5px; width: 240px;}
+.pointer-events-none {pointer-events: none !important;}
+
+.statut {background-color: #eee; padding: 26px; text-align: center; border-radius: 5px; width: 240px;}
 
 .sd-title {
   text-align: center;
   text-transform: uppercase;
 }
 
-.top-bar {background-color: white; color: #007bff; border: solid 1px silver; border-radius: 10px;}
+.top-bar {
+  display: flex;
+  background-color: white;
+  color: #e7001a !important;
+  border: solid 1px silver;
+  border-radius: 10px;
+}
 
 .overflow-hidden {overflow: hidden;}
 
@@ -60,10 +115,16 @@ a[disabled] {
 }
 
 .wrapper {
-  min-height: 100%;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
+
+.content {
+  flex: 1;
+}
+
+.flex-1 {flex: 1;}
 
 html {
   height: 100%;

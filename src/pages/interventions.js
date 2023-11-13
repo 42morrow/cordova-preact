@@ -5,7 +5,7 @@ import {Link, route} from 'preact-router';
 import {dbGetInterventionsSalon, dbGetSalon} from '../db/db';
 import {statutsIntervention} from '../config/statutsIntervention';
 
-export default function Interventions({user, salonId, synchroInterventionsDone}) {
+export default function Interventions({user, salonId, synchroDone}) {
 
     console.log("IN INTERVENTIONS, salonId:: "+salonId);
 
@@ -46,7 +46,7 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
             );
             setInterventions(interventionsParDateOrdonnee);
         });
-    }, [synchroInterventionsDone]);
+    }, [synchroDone]);
 
 
 
@@ -61,7 +61,7 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
             <Link className="btn btn-dark w-100 p-3 mb-2 text-uppercase" href="/index.html">
                 Salons
             </Link>
-            <Link className="btn btn-secondary w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+salonId}>
+            <Link className="btn btn-client-primary pointer-events-none w-100 p-3 mb-2 text-uppercase" href={'/interventions/'+salonId}>
                 {salon.nom} ({salonNbInterventions})
             </Link>
             {!!(interventions && Object.keys(interventions).length > 0) ?
@@ -77,6 +77,7 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
                                 <div class="col-md-8 text-left mb-2">
                                     {/* <div>{intervention.heure}</div> */}
                                     <div>{intervention.client}</div>
+                                    <div class="font-italic color-aaa">{intervention.typeLabel}</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class={`statut w-100 ${statutsIntervention[intervention.statut].couleur}`}>
