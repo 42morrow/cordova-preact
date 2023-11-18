@@ -33,7 +33,7 @@ export function synchroInterventions() {
                     heureReaDebut: intervention.heure_rea_debut,
                     heureReaFin: intervention.heure_rea_fin,
                     signature: intervention.signature,
-                    statut: 'signee',
+                    statut: 'terminee',
                 });
             });
             return apiSetInterventions(apiFields);
@@ -47,7 +47,7 @@ export function synchroInterventions() {
         if(apiFields.length > 0) {
             console.log(apiFields);
         }
-        apiFields.forEach( intervention => update('intervention', intervention.id, {statut: 'signee'}));
+        apiFields.forEach( intervention => update('intervention', intervention.id, {statut: 'terminee'}));
     })
     .then( () => {
         console.log(" >>> SYNCHRO INTERVENTIONS::update des interventions en db done, now : apiGetInterventions");
@@ -69,15 +69,14 @@ export function synchroInterventions() {
                 intervention.client,
                 intervention.date,
                 intervention.dateFr,
-                //intervention.heure,
+                intervention.heure,
                 intervention.type,
                 intervention.typeLabel,
+                intervention.surveyjsId,
+                intervention.surveyjsReponses,
                 intervention.statut,
-                intervention.heureReaDebut,
-                intervention.heureReaFin,
-                intervention.signature,
-                '',
-                '',
+                new Date().toISOString().substring(0, 17),
+                intervention.maj,
             ];
             interventionsApiDbFormatted.push(arrayIntervention);
         });
@@ -98,8 +97,8 @@ export function synchroInterventions() {
             }
             else {
                 if(interventionApi[structureIntervention.statut.index] != 'afaire' // en théorie impossible car on envoie que les afaire
-                && interventionDb.statut != 'signeeatransferer'
-                && interventionDb.maj_local.substring(0, 9) != new Date().toISOString().substring(0, 9)
+                && interventionDb.statut != 'termineeatransferer'
+                && interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)
                 ) {
                     console.log("À ASUPPRIMER CAS 1 : "+interventionDb.id);
                     interventionsASupprimer.push(interventionDb.id);
@@ -108,9 +107,12 @@ export function synchroInterventions() {
         });
         interventionsDb.forEach(interventionDb => {
             let interventionApi = interventionsApi.find( intervention => intervention[structureIntervention.roid.index] === interventionDb.roid);
+if(typeof interventionApi === "undefined") {
+    console.log("Cas SUPPR 2, Intervention présente dans API only, db.id = "+interventionDb.id+", db.statut = "+interventionDb.statut+", interventionDb.maj_local = "+interventionDb.maj_local.substring(0, 10)+" / "+(new Date().toISOString().substring(0, 10)));
+}
             if(typeof interventionApi === "undefined"
-            && interventionDb.statut != 'signeeatransferer'
-            && interventionDb.maj_local.substring(0, 9) != new Date().toISOString().substring(0, 9)
+            && interventionDb.statut != 'termineeatransferer'
+            && interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)
             ) {
                 console.log("À ASUPPRIMER CAS 2 : "+interventionDb.id);
                 interventionsASupprimer.push(interventionDb.id);

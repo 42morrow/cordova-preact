@@ -7,10 +7,8 @@ import * as Survey from 'survey-jquery';
 import 'survey-jquery/defaultV2.css';
 import {surveyjsTheme} from '../config/surveyjsTheme';
 
-import {dbGetIntervention, update} from '../db/db';
+import {dbGetIntervention, update, dbGetSurveyjsConfig} from '../db/db';
 import {apiSetInterventions} from '../api/api';
-
-import paramQuestionnaire from '../../config/paramQuestionnaire.json';
 
 export default function Intervention({user, salonId, salonNbInterventions, interventionId}) {
 
@@ -22,44 +20,59 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
 
 
     const [intervention, setIntervention] = useState(null);
+    const [survey, setSurvey] = useState(null);
+    const [surveyjsJsonQuestions, setSurveyjsJsonQuestions] = useState(null);
 
     useEffect(() => {
         console.log("Intervention useEffect setIntervention");
-        dbGetIntervention(interventionId).then( (intervention) => { console.log(intervention); setIntervention(intervention); } );
+        dbGetIntervention(interventionId)
+        .then( intervention => {
+            setIntervention(intervention);
+            return dbGetSurveyjsConfig(intervention);
+        })
+        .then( ({intervention, surveyjsJsonQuestions}) => {
+            console.log(intervention);
+            const survey = new Survey.Model(surveyjsJsonQuestions);
+            survey.applyTheme(surveyjsTheme);
+            setSurvey(survey);
+            setSurveyjsJsonQuestions(surveyjsJsonQuestions);
+        });
+
     }, []);
 
 
     useEffect(() => {
 
-        console.log("Intervention useEffect init Survey");
+        if(intervention == null || survey == null) {
+            return;
+        }
 
-        const survey = new Survey.Model(paramQuestionnaire);
-        survey.applyTheme(surveyjsTheme);
+        console.log("Intervention useEffect init Survey");
 
         survey.onComplete.add((sender, options) => {
             //console.log(JSON.stringify(sender.data, null, 3));
             let dbFields = {
-                heure_rea_debut: sender.data.heure_debut,
-                heure_rea_fin: sender.data.heure_fin,
-                signature: sender.data.signature,
-                statut: 'signeeatransferer',
+                surveyjs_json_reponses: JSON.stringify(sender.data),
+                statut: 'termineeatransferer',
                 maj_local: new Date().toISOString(),
             };
             update('intervention', interventionId, dbFields)
             .then( () => {
-                let apiFields = [{
+                let apiFields = {
+                    userId: user.id,
+                    interventions: [{
                     interventionId: intervention.roid,
-                    heureReaDebut: sender.data.heure_debut,
-                    heureReaFin: sender.data.heure_fin,
-                    signature: sender.data.signature,
-                    statut: 'signee',
-                }];
+                    surveyjsQuestionnaireId: intervention.surveyjs_id,
+                    surveyjsJsonQuestions: surveyjsJsonQuestions,
+                    surveyjsJsonReponses: JSON.stringify(sender.data),
+                    }],
+                };
                 return apiSetInterventions(apiFields);
             })
             .then( () => {
-                console.log("SUCCESS + UPDATE SIGNÉE/TRANSFÉRÉE");
+                console.log("SUCCESS + UPDATE TERMINÉE/TRANSFÉRÉE");
                 let dbFields = {
-                    statut: 'signee',
+                    statut: 'terminee',
                     maj_local: new Date().toISOString(),
                 };
                 update('intervention', interventionId, dbFields);
@@ -71,11 +84,18 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
 
         $("#surveyElement").Survey({ model: survey });
 
+        if(intervention.statut != "afaire") {
+            let reponses = JSON.parse(intervention.surveyjs_json_reponses);
+            Object.keys(reponses).map( (donnee) => {
+console.log(donnee+" : "+reponses[donnee]);
+                survey.setValue(donnee, reponses[donnee]);
+            });
+        }
 
-    }, [intervention]);
+    }, [survey, intervention]);
 
 
-    if(!intervention) {
+    if(intervention == null || survey == null) {
         return <div className="text-center p-3">Veuillez patienter</div>
     }
 
@@ -88,7 +108,7 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
                 {intervention.salon} ({salonNbInterventions})
             </Link>
             <div className="btn btn-client-primary pointer-events-none w-100 p-3 mb-2 text-uppercase">
-                {intervention.date_fr} {intervention.heure} - {intervention.client} -  {intervention.type}
+                {intervention.date_fr} <i class="fas fa-clock ml-1 mr-1"></i>{intervention.heure} - {intervention.client} -  {intervention.type_label}
             </div>
             <div id="surveyElement"></div>
         </div>

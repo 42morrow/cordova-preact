@@ -33,6 +33,7 @@ import Salons from './pages/salons';
 import Interventions from './pages/interventions';
 import Intervention from './pages/intervention';
 import Dump from './pages/dump';
+import Query from './pages/query';
 
 import { createTables, dbGetUser } from './db/db';
 
@@ -182,6 +183,7 @@ function App() {
                     <Interventions user={user} synchroDone={synchroDone} path="/interventions/:salonId" />
                     <Intervention user={user} path="/intervention/:salonId/:salonNbInterventions/:interventionId" />
                     <Dump path="/dump" />
+                    <Query path="/query" />
                 </Router>
             </div>
             <Footer />

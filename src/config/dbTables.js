@@ -8,13 +8,18 @@ export const dbTables = {
         +'client TEXT NOT NULL, '
         +'date TEXT NOT NULL, '
         +'date_fr TEXT NOT NULL, '
+        +'heure TEXT NULL, '
         //+'heure TEXT NOT NULL, '
         +'type TEXT NOT NULL, '
-        +'typeLabel TEXT NOT NULL, '
+        +'type_label TEXT NOT NULL, '
+        +'surveyjs_id TEXT NULL, '
+        +'surveyjs_json_reponses TEXT NULL, '
         +'statut TEXT NOT NULL, '
+        /*
         +'heure_rea_debut TEXT NULL, '
         +'heure_rea_fin TEXT NULL, '
         +'signature TEXT NULL, '
+        */
         +'maj_local TEXT NOT NULL, '
         +'maj_remote TEXT NOT NULL'
         +')',
@@ -29,7 +34,7 @@ export const dbTables = {
         'CREATE TABLE IF NOT EXISTS surveyjs_config ('
         +'id INTEGER PRIMARY KEY AUTOINCREMENT, '
         +'survey_id TEXT NOT NULL, '
-        +'json TEXT NOT NULL, '
+        +'json_questions TEXT NOT NULL, '
         +'date_maj TEXT NOT NULL '
         +');',
 };

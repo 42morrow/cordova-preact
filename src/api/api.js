@@ -32,11 +32,12 @@ export function apiSetInterventions(data) {
 
     return new Promise((resolve, reject) => {
         $.ajax({
+            headers: { "Authorization": "ApiKey "+ENV_API_KEY },
             type: 'POST',
             url: ENV_API_ENDPOINT + "set-interventions",
             data: JSON.stringify(data),
             error: ( error ) => { console.log('AJAX ERROR'); reject(error); },
-            success: () => { console.log('AJAX SUCCESS'); resolve(data); },
+            success: (data) => { console.log('AJAX SUCCESS'); resolve(data); },
         })
     });
 
@@ -53,7 +54,7 @@ export function apiLogin(username, password) {
                 username: username,
                 password: password,
             }),
-            error: ( error ) => { console.log('AJAX ERROR'); reject(error.responseJSON); },
+            error: ( error ) => { console.log('AJAX ERROR'); console.log(error); reject(error.responseJSON); },
             success: ( data ) => { console.log('AJAX SUCCESS'); resolve(data); },
         })
     });

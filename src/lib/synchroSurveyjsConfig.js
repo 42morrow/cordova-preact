@@ -31,7 +31,7 @@ export function synchroSurveyjsConfig() {
             let arraySurveyjsConfig = [
                 null,
                 config.survey_id,
-                config.json,
+                config.json_questions,
                 config.date_maj,
             ];
             surveyjsConfigDbFormatted.push(arraySurveyjsConfig);

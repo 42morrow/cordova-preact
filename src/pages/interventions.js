@@ -49,6 +49,14 @@ export default function Interventions({user, salonId, synchroDone}) {
     }, [synchroDone]);
 
 
+    function getHeure(intervention) {
+        if(intervention.heure != null && intervention.heure != '23:59') {
+            return <div><i class="fas fa-clock mr-1"></i>{intervention.heure}</div>;
+        }
+        else {
+            return <div class="color-silver">Horaire non précisé</div>;
+        }
+    }
 
     if(!interventions || !salon) {
         return <div className="text-center p-3">Veuillez patienter</div>
@@ -75,9 +83,9 @@ export default function Interventions({user, salonId, synchroDone}) {
                         >
                             <div class="row">
                                 <div class="col-md-8 text-left mb-2">
-                                    {/* <div>{intervention.heure}</div> */}
+                                    <div>{getHeure(intervention)}</div>
                                     <div>{intervention.client}</div>
-                                    <div class="font-italic color-aaa">{intervention.typeLabel}</div>
+                                    <div class="font-italic color-aaa">{intervention.type_label}</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class={`statut w-100 ${statutsIntervention[intervention.statut].couleur}`}>

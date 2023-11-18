@@ -30,7 +30,10 @@ export default function User({user, callUpdateUser}) {
             insertRows('user', [ [null, user.username , user.nom, user.date_connexion ] ])
         })
         .then( () => callUpdateUser() )
-        .catch( data => $("#error").html(data.message) )
+        .catch( (data) => {
+            let message = typeof data === "object" && data.hasOwnProperty("message") ? data.message : "Une erreur a été rencontrée";
+            $("#error").html(message)
+        })
         ;
 
     }

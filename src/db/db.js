@@ -160,6 +160,15 @@ export function update (table, id, data) {
 }
 
 
+export function rawQuery (query) {
+
+    tx = helper.newBatchTransaction();
+    tx.executeStatement(query);
+    return tx.commit();
+
+}
+
+
 export function getRows(table) {
 
     tx = helper.newBatchTransaction();
@@ -253,7 +262,7 @@ export function dbGetInterventionsSalon(salonId) {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT * FROM intervention WHERE salon_id = ?', [salonId]);
+        return helper.executeStatement('SELECT * FROM intervention WHERE salon_id = ? ORDER BY date, heure', [salonId]);
 
     }).then(function(res) {
         var interventions = [];
@@ -274,7 +283,7 @@ export function dbGetInterventionsATransferer() {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT * FROM intervention WHERE statut = ?', ['signeeatransferer']);
+        return helper.executeStatement('SELECT * FROM intervention WHERE statut = ?', ['termineeatransferer']);
     }).then(function(res) {
         var interventions = [];
         if(res.rows.length > 0) {
@@ -324,6 +333,24 @@ export function dbGetUser() {
 export function dbSetUser() {
 
 }
+
+
+export function dbGetSurveyjsConfig(intervention) {
+
+    tx = helper.newBatchTransaction();
+    return tx.commit().then(function() {
+        return helper.executeStatement('SELECT json_questions FROM surveyjs_config WHERE survey_id = "'+intervention.surveyjs_id+'"', null);
+
+    }).then(function(res) {
+        let surveyjsJsonQuestions = res.rows.length > 0 ? res.rows.item(0).json_questions : null;
+        return new Promise( (resolve) => resolve({intervention, surveyjsJsonQuestions}));
+
+    })
+    .catch( error => console.log(error) )
+    ;
+
+}
+
 
 
 
