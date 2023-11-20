@@ -30,6 +30,8 @@ export function apiGetSurveyjsConfig() {
 
 export function apiSetInterventions(data) {
 
+    var interventions = data.interventions; // Retournées dans le resolve
+
     return new Promise((resolve, reject) => {
         $.ajax({
             headers: { "Authorization": "ApiKey "+ENV_API_KEY },
@@ -37,7 +39,7 @@ export function apiSetInterventions(data) {
             url: ENV_API_ENDPOINT + "set-interventions",
             data: JSON.stringify(data),
             error: ( error ) => { console.log('AJAX ERROR'); reject(error); },
-            success: (data) => { console.log('AJAX SUCCESS'); resolve(data); },
+            success: (data) => { console.log('AJAX SUCCESS'); resolve(interventions); },
         })
     });
 

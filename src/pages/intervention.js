@@ -26,11 +26,11 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
     useEffect(() => {
         console.log("Intervention useEffect setIntervention");
         dbGetIntervention(interventionId)
-        .then( intervention => {
-            setIntervention(intervention);
-            return dbGetSurveyjsConfig(intervention);
+        .then( itv => {
+            setIntervention(itv);
+            return dbGetSurveyjsConfig(itv.surveyjs_id);
         })
-        .then( ({intervention, surveyjsJsonQuestions}) => {
+        .then( (surveyjsJsonQuestions) => {
             console.log(intervention);
             const survey = new Survey.Model(surveyjsJsonQuestions);
             survey.applyTheme(surveyjsTheme);
@@ -58,7 +58,7 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
             };
             update('intervention', interventionId, dbFields)
             .then( () => {
-                let apiFields = {
+                let majUneIntervention = {
                     userId: user.id,
                     interventions: [{
                     interventionId: intervention.roid,
@@ -67,7 +67,7 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
                     surveyjsJsonReponses: JSON.stringify(sender.data),
                     }],
                 };
-                return apiSetInterventions(apiFields);
+                return apiSetInterventions(majUneIntervention);
             })
             .then( () => {
                 console.log("SUCCESS + UPDATE TERMINÉE/TRANSFÉRÉE");
@@ -87,7 +87,6 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
         if(intervention.statut != "afaire") {
             let reponses = JSON.parse(intervention.surveyjs_json_reponses);
             Object.keys(reponses).map( (donnee) => {
-console.log(donnee+" : "+reponses[donnee]);
                 survey.setValue(donnee, reponses[donnee]);
             });
         }

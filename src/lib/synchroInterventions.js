@@ -1,11 +1,11 @@
-import {createTables, dbGetInterventions, dbGetInterventionsATransferer, update, insertRows, deleteIds} from '../db/db';
+import {createTables, dbGetInterventions, dbGetInterventionsATransferer, update, insertRows, deleteIds, dbGetSurveyjsAllConfigs} from '../db/db';
 import {apiGetInterventions, apiSetInterventions} from '../api/api';
 
 import {structureIntervention} from '../config/structureIntervention';
 
 var synchroInterventionsEncours = false;
 
-export function synchroInterventions() {
+export function synchroInterventions(user) {
 
     if(synchroInterventionsEncours) {
         console.log(" >>> SYNCHRO INTERVENTIONS::BYPASS");
@@ -16,10 +16,15 @@ export function synchroInterventions() {
     }
 
     var interventionsASupprimer = [];
+    var globalSurveyjsQuestionsBySurveyjsId = null;
 
     console.log(" >>> SYNCHRO INTERVENTIONS::START");
     return createTables()
-    .then( () => dbGetInterventionsATransferer() )
+    .then( () => dbGetSurveyjsAllConfigs() )
+    .then( (surveyjsQuestionsBySurveyjsId) => {
+        globalSurveyjsQuestionsBySurveyjsId = surveyjsQuestionsBySurveyjsId;
+        return dbGetInterventionsATransferer();
+    })
     .then( interventionsATransferer => {
         console.log(" >>> SYNCHRO INTERVENTIONS::dbGetInterventionsATransferer done ("+interventionsATransferer.length+")")
         if(interventionsATransferer.length > 0) {
@@ -30,13 +35,12 @@ export function synchroInterventions() {
                 apiFields.push({
                     id: intervention.id,
                     interventionId: intervention.roid,
-                    heureReaDebut: intervention.heure_rea_debut,
-                    heureReaFin: intervention.heure_rea_fin,
-                    signature: intervention.signature,
-                    statut: 'terminee',
+                    surveyjsQuestionnaireId: intervention.surveyjs_id,
+                    surveyjsJsonQuestions: intervention.surveyjs_id in globalSurveyjsQuestionsBySurveyjsId ? globalSurveyjsQuestionsBySurveyjsId[intervention.surveyjs_id] : null,
+                    surveyjsJsonReponses: intervention.surveyjs_json_reponses,
                 });
             });
-            return apiSetInterventions(apiFields);
+            return apiSetInterventions({ userId: user.id, interventions: apiFields });
         }
         else {
             return Promise.resolve([]);
@@ -107,9 +111,6 @@ export function synchroInterventions() {
         });
         interventionsDb.forEach(interventionDb => {
             let interventionApi = interventionsApi.find( intervention => intervention[structureIntervention.roid.index] === interventionDb.roid);
-if(typeof interventionApi === "undefined") {
-    console.log("Cas SUPPR 2, Intervention présente dans API only, db.id = "+interventionDb.id+", db.statut = "+interventionDb.statut+", interventionDb.maj_local = "+interventionDb.maj_local.substring(0, 10)+" / "+(new Date().toISOString().substring(0, 10)));
-}
             if(typeof interventionApi === "undefined"
             && interventionDb.statut != 'termineeatransferer'
             && interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)

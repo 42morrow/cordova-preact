@@ -3,6 +3,7 @@ import {useState, useEffect} from 'preact/hooks';
 import {Link, route} from 'preact-router';
 import $ from 'jquery';
 
+import { dbTables } from '../config/dbTables';
 import {rawQuery} from '../db/db';
 
 export default function Query() {
@@ -28,6 +29,25 @@ export default function Query() {
     }
 
 
+    function dropTables() {
+
+        var queries = [];
+        Object.keys(dbTables).map( (dbTable) => {
+            queries.push(rawQuery("DROP TABLE IF EXISTS "+dbTable));
+        });
+
+        $("#error").html("");
+
+        Promise.all(queries)
+        .then( () => {
+            route('/dump');
+        })
+        .catch( error => $("#error").html(error) )
+        ;
+
+    }
+
+
     return (
         <div>
             <div>
@@ -39,6 +59,10 @@ export default function Query() {
                 </div>
 
                 <div id="error" class="color-red"></div>
+
+                <div class="form-inline mt-5">
+                    <button type="button" onClick={dropTables} class="btn btn-dark pl-5 pr-5">DROP TABLES</button>
+                </div>
 
             </div>
         </div>

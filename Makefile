@@ -18,4 +18,5 @@ android:
 
 apk:
 	cordova build android --release --buildConfig
+	cp platforms/android/app/build/outputs/apk/release/app-release.apk ../bvp/mobile-app/bvp
 

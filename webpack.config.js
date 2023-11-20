@@ -37,8 +37,8 @@ module.exports = {
   },
   plugins: [
     new DefinePlugin({
-        ENV_API_ENDPOINT: JSON.stringify('https://127.0.0.1:8020/fr/api/'),
-        //ENV_API_ENDPOINT: JSON.stringify('https://bvp-extranet.fr/public/fr/api/'),
+        //ENV_API_ENDPOINT: JSON.stringify('https://127.0.0.1:8020/fr/api/'),
+        ENV_API_ENDPOINT: JSON.stringify('https://bvp-extranet.fr/public/fr/api/'),
         //ENV_API_ENDPOINT: JSON.stringify('https://42morrow.biinflow.com/public/fr/api/'),
         ENV_API_KEY: JSON.stringify('3ca576c8-b9f3-47c9-9c83-8f669cb90694')
     }),

@@ -114,7 +114,7 @@ function App() {
             if(user != null) {
                 changeSyncIsFinished(false);
 
-                synchroInterventions()
+                synchroInterventions(user)
                 .then( () => synchroSurveyjsConfig() )
                 .then( () => {
                     setSynchroDone(true);
@@ -165,6 +165,11 @@ function App() {
     }
 
 
+    function home() {
+        route('/index.html');
+    }
+
+
     return (
         <div class="p-1 wrapper" style="">
             <div class="content">
@@ -173,6 +178,7 @@ function App() {
                         <UserStatus user={user} statutConnexionForDisplay={statutConnexionForDisplay} />
                     </div>
                     <div class="pl-1 pt-1">
+                        <i class="fas fa-home color-555 mr-2" role="button" onClick={home}></i>
                         <Connexion statutConnexionForDisplay={statutConnexionForDisplay} btnSyncClick={btnSyncClick} syncIsFinished={syncIsFinished} />
                     </div>
                 </div>

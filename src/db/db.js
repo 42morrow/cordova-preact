@@ -335,15 +335,37 @@ export function dbSetUser() {
 }
 
 
-export function dbGetSurveyjsConfig(intervention) {
+export function dbGetSurveyjsAllConfigs() {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT json_questions FROM surveyjs_config WHERE survey_id = "'+intervention.surveyjs_id+'"', null);
+        return helper.executeStatement('SELECT survey_id, json_questions FROM surveyjs_config', null);
+
+    }).then(function(res) {
+        let surveyjsQuestionsBySurveyjsId = [];
+        if(res.rows.length > 0) {
+            for(let i = 0; i < res.rows.length; i++) {
+                surveyjsQuestionsBySurveyjsId[res.rows.item(i).survey_id] = res.rows.item(i).json_questions;
+            }
+        }
+        return new Promise( (resolve) => resolve(surveyjsQuestionsBySurveyjsId));
+
+    })
+    .catch( error => console.log(error) )
+    ;
+
+}
+
+
+export function dbGetSurveyjsConfig(surveyjsId) {
+
+    tx = helper.newBatchTransaction();
+    return tx.commit().then(function() {
+        return helper.executeStatement('SELECT json_questions FROM surveyjs_config WHERE survey_id = "'+surveyjsId+'"', null);
 
     }).then(function(res) {
         let surveyjsJsonQuestions = res.rows.length > 0 ? res.rows.item(0).json_questions : null;
-        return new Promise( (resolve) => resolve({intervention, surveyjsJsonQuestions}));
+        return new Promise( (resolve) => resolve(surveyjsJsonQuestions));
 
     })
     .catch( error => console.log(error) )

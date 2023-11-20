@@ -3,7 +3,8 @@ import {useState, useEffect} from 'preact/hooks';
 import {Link, route} from 'preact-router';
 import $ from 'jquery';
 
-import {showTables, getRows} from '../db/db';
+import {createTables, showTables, getRows} from '../db/db';
+import {apiGetInterventions} from '../api/api';
 
 export default function Dump() {
 
@@ -13,11 +14,14 @@ export default function Dump() {
     const [dbInterventions, setDbInterventions] = useState([]);
     const [dbUsers, setDbUsers] = useState([]);
     const [dbSurveyjsConfig, setDbSurveyjsConfig] = useState([]);
+    const [apiInterventions, setApiInterventions] = useState([]);
     const [update, setUpdate] = useState(false);
 
     useEffect(() => {
         console.log("useEffect setDbTables");
-        showTables().then( (rows) => {
+        createTables()
+        .then( () => showTables() )
+        .then( (rows) => {
             let dbTables = [];
             if(rows.length > 0) {
                 for(let i = 0; i < rows.length; i++) {
@@ -37,32 +41,39 @@ export default function Dump() {
                 }
             }
             setDbInterventions(interventions);
-         })
-         .then( () => getRows("user") )
-         .then( rows => {
-             let users = [];
-             if(rows.length > 0) {
-                 for(let i = 0; i < rows.length; i++) {
-                     users.push(rows.item(i));
-                 }
-             }
-             setDbUsers(users);
-          })
-          .then( () => getRows("surveyjs_config") )
-          .then( rows => {
-              let surveyjsConfig = [];
-              if(rows.length > 0) {
-                  for(let i = 0; i < rows.length; i++) {
-                    surveyjsConfig.push(rows.item(i));
-                  }
-              }
-              setDbSurveyjsConfig(surveyjsConfig);
-           })
-          ;
+        })
+        .then( () => getRows("user") )
+        .then( rows => {
+            let users = [];
+            if(rows.length > 0) {
+                for(let i = 0; i < rows.length; i++) {
+                    users.push(rows.item(i));
+                }
+            }
+            setDbUsers(users);
+        })
+        .then( () => getRows("surveyjs_config") )
+        .then( rows => {
+            let surveyjsConfig = [];
+            if(rows.length > 0) {
+                for(let i = 0; i < rows.length; i++) {
+                  surveyjsConfig.push(rows.item(i));
+                }
+            }
+            setDbSurveyjsConfig(surveyjsConfig);
+        })
+        .then( () => {
+            return apiGetInterventions();
+        })
+        .then( apiInterventions => {
+            setApiInterventions(apiInterventions);
+        })
+        ;
     }, [update]);
 
     return (
         <div>
+            <div class="font-weight-bold text-12px mt-4">DB, tables avec structure</div>
             {
                 dbTables.map( (table) => (
                     <div class="mt-3">
@@ -71,7 +82,15 @@ export default function Dump() {
                     </div>
                 ))
             }
-            <div class="font-weight-bold text-12px mt-4">Interventions : {dbInterventions.length}</div>
+            <div class="font-weight-bold text-12px mt-4">Interventions API : {apiInterventions.length}</div>
+            {
+                apiInterventions.map( (intervention) => (
+                    <div class="mt-3">
+                        {Object.keys(intervention).map( (donnee) => ( <div class="text-8px monospace"><span class="color-silver mr- 2">{donnee}</span> {intervention[donnee]}</div> ) ) }
+                    </div>
+                ))
+            }
+            <div class="font-weight-bold text-12px mt-4">Interventions DB : {dbInterventions.length}</div>
             {
                 dbInterventions.map( (intervention) => (
                     <div class="mt-3">
@@ -79,7 +98,7 @@ export default function Dump() {
                     </div>
                 ))
             }
-            <div class="font-weight-bold text-12px mt-4">Users : {dbUsers.length}</div>
+            <div class="font-weight-bold text-12px mt-4">Users DB : {dbUsers.length}</div>
             {
                 dbUsers.map( (user) => (
                     <div class="mt-3">
@@ -87,7 +106,7 @@ export default function Dump() {
                     </div>
                 ))
             }
-            <div class="font-weight-bold text-12px mt-4">Surveyjs Config : {dbSurveyjsConfig.length}</div>
+            <div class="font-weight-bold text-12px mt-4">Surveyjs Config DB : {dbSurveyjsConfig.length}</div>
             {
                 dbSurveyjsConfig.map( (config) => (
                     <div class="mt-3">

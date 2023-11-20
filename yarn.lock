@@ -2288,6 +2288,11 @@
     "read-chunk" "^3.2.0"
     "strip-bom" "^4.0.0"
 
+"cordova-plugin-buildinfo@^4.0.0":
+  "integrity" "sha512-2Sl4sgr9L0vXryd6ZTWecs0+w3SlYM5iQPUPMwpkryaEo9MIbYvQoiVTosKpzHAyKSho4uTSQT9d2acosVVnFw=="
+  "resolved" "https://registry.npmjs.org/cordova-plugin-buildinfo/-/cordova-plugin-buildinfo-4.0.0.tgz"
+  "version" "4.0.0"
+
 "cordova-plugin-file-transfer@github:apache/cordova-plugin-file-transfer":
   "resolved" "git+ssh://git@github.com/apache/cordova-plugin-file-transfer.git#06335fea28f7ad4d815aa621e02823a63b0a9bc6"
   "version" "2.0.0-dev"
