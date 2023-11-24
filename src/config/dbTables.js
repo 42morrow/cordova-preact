@@ -26,6 +26,7 @@ export const dbTables = {
     user:
         'CREATE TABLE IF NOT EXISTS user ('
         +'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+        +'roid INTEGER NOT NULL, '
         +'username TEXT NOT NULL, '
         +'nom TEXT NOT NULL, '
         +'date_connexion TEXT NOT NULL '
@@ -36,6 +37,15 @@ export const dbTables = {
         +'survey_id TEXT NOT NULL, '
         +'json_questions TEXT NOT NULL, '
         +'date_maj TEXT NOT NULL '
+        +');',
+    log:
+        'CREATE TABLE IF NOT EXISTS log ('
+        +'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+        +'user_id INTEGER NULL, '
+        +'dthe TEXT NOT NULL, '
+        +'type TEXT NOT NULL, '
+        +'log TEXT NOT NULL, '
+        +'sync INTEGER NOT NULL '
         +');',
 };
 

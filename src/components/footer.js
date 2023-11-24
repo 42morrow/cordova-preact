@@ -34,6 +34,9 @@ export default function Footer() {
                 <span class="font-size-0dot5em">BUILD {buildDate}</span>
             </div>
             <div class="float-right text-right">
+                <Link class="color-silver hover-777 mr-3" href="/log">
+                    <i class="fas fa-history"></i> LOG
+                </Link>
                 <Link class="color-silver hover-777 mr-3" href="/query">
                     <i class="fas fa-terminal"></i> QUERY
                 </Link>

@@ -34,36 +34,48 @@ import Interventions from './pages/interventions';
 import Intervention from './pages/intervention';
 import Dump from './pages/dump';
 import Query from './pages/query';
+import Log from './pages/log';
 
-import { createTables, dbGetUser } from './db/db';
+import { createTables, dbGetUser, getTables } from './db/db';
 
 import {synchroInterventions} from './lib/synchroInterventions';
 import {synchroSurveyjsConfig} from './lib/synchroSurveyjsConfig';
+import {log} from './lib/log';
 
 
 export var testAppState = false;
 
 function App() {
 
+    useEffect(() => {
+        log(user, "info", "IN APP.JS, ENTER");
+        log(user, "info", "IN APP.JS >>> UUID : "+device.uuid);
+    }, []);
+
+    window.onError = function(error, url, line) {
+        log(user, "error", error+", url "+url+", line "+line);
+    };
 
     const [syncIsFinished, setSyncIsFinished] = useState(true);
 
     function changeSyncIsFinished(syncIsFinished) {
-        console.log("changeSyncIsFinished");
         setSyncIsFinished(syncIsFinished);
     }
 
     function btnSyncClick() {
-        console.log(btnSyncIsClicked);
         setBtnSyncIsClicked(true);
     }
 
+
     const [btnSyncIsClicked, setBtnSyncIsClicked] = useState(false);
     const [callSync, setCallSync] = useState(false);
+    const [synchroInterventionsDone, setSynchroInterventionsDone] = useState(false);
+    const [user, setUser] = useState(null);
+
 
     useEffect(() => {
-        console.log("USE EFFECT setCallSync");
         if(btnSyncIsClicked) {
+            setSynchroInterventionsDone(false);
             setCallSync(true);
             setBtnSyncIsClicked(false);
         }
@@ -81,7 +93,7 @@ function App() {
 
         window.addEventListener("offline", function() {
             setTimeout(function() {
-                console.log(" ================> OFFLINE : "+navigator.connection.type);
+                log(user, "info", " ================> OFFLINE : "+navigator.connection.type);
                 setStatutConnexionForDisplay(false);
             }, 500);
         }, false);
@@ -89,42 +101,40 @@ function App() {
         window.addEventListener("online", function() {
             setTimeout(function() {
                 setStatutConnexionForDisplay(true);
-                console.log(" ================> ONLINE : "+navigator.connection.type);
+                log(user, "info", " ================> ONLINE : "+navigator.connection.type);
             }, 500);
         }, false);
-
-        console.log("statutConnexionForDisplay useEffect:");
-        console.log(statutConnexionForDisplay);
 
     }, [statutConnexionForDisplay]);
 
 
     // SYNCHRO INTERVENTIONS + SYNCHRO SURVEYJS CONFIG + GET USER
 
-    const [synchroDone, setSynchroDone] = useState(false);
-    const [user, setUser] = useState(null);
-
     useEffect(() => {
-
-        console.log("synchroDone useEffect");
-        console.log("statutConnexionForDisplay: "+(statutConnexionForDisplay ? "oui" : "non"));
 
         if(statutConnexionForDisplay) {
 
             if(user != null) {
                 changeSyncIsFinished(false);
 
+                setSynchroInterventionsDone(false);
                 synchroInterventions(user)
-                .then( () => synchroSurveyjsConfig() )
+                .then( (synchroStatus) => {
+                    log(user, "info", "IN APP.JS >>> synchroInterventions done, setSynchroInterventionsDone(true)");
+                    if(synchroStatus == "done") {
+                        setSynchroInterventionsDone(true);
+                        route('/index.html');
+                    }
+                    return synchroSurveyjsConfig();
+                } )
                 .then( () => {
-                    setSynchroDone(true);
+                    log(user, "info", "IN APP.JS >>> synchroSurveyjsConfig done");
                     changeSyncIsFinished(true);
                 } )
                 .then( () => {
-                    setSynchroDone(false);
-                    route('/index.html');
+                    //setSynchroInterventionsDone(false);
                 } )
-                .catch( (error) => { console.log("CATCH ERROR"); console.log(error); })
+                .catch( (error) => { log(user, "error", typeof error == "string" ? error : error.toString()); })
                 ;
             }
             else {
@@ -133,10 +143,15 @@ function App() {
 
         }
         else {
-            setSynchroDone(false);
+            //setSynchroInterventionsDone(false);
         }
 
     }, [statutConnexionForDisplay, callSync, user]);
+
+
+    useEffect(() => {
+        log(user, "info", "IN APP.JS >>> >>> >>> >>> >>> >>> >>> >>> >>> >>> >>> >>> synchroInterventionsDone changed to "+(synchroInterventionsDone ? "true" : "false"));
+    }, [synchroInterventionsDone]);
 
 
 
@@ -144,10 +159,19 @@ function App() {
 
     useEffect(() => {
 
-        console.log("user useEffect");
-
         createTables().then( () => dbGetUser().then( user => {
             setUpdateUser(false);
+            if(user != null) {
+                user.toString = function() {
+                    let userString = [];
+                    for (var key of Object.keys(this)) {
+                        if(["string", "number"].includes(typeof this[key])) {
+                            userString.push(key+": "+this[key]);
+                        }
+                    }
+                    return userString.join(", ");
+                }
+            }
             setUser(user);
             if(user == null) {
                 route('/user');
@@ -179,17 +203,18 @@ function App() {
                     </div>
                     <div class="pl-1 pt-1">
                         <i class="fas fa-home color-555 mr-2" role="button" onClick={home}></i>
-                        <Connexion statutConnexionForDisplay={statutConnexionForDisplay} btnSyncClick={btnSyncClick} syncIsFinished={syncIsFinished} />
+                        <Connexion user={user} statutConnexionForDisplay={statutConnexionForDisplay} btnSyncClick={btnSyncClick} syncIsFinished={syncIsFinished} />
                     </div>
                 </div>
                 <Router>
                     <User user={user} callUpdateUser={callUpdateUser} path="/user" />
-                    <Salons user={user} synchroDone={synchroDone} path="/" />
-                    <Salons user={user} synchroDone={synchroDone} path="/index.html" />
-                    <Interventions user={user} synchroDone={synchroDone} path="/interventions/:salonId" />
+                    <Salons user={user} synchroInterventionsDone={synchroInterventionsDone} path="/" />
+                    <Salons user={user} synchroInterventionsDone={synchroInterventionsDone} path="/index.html" />
+                    <Interventions user={user} synchroInterventionsDone={synchroInterventionsDone} path="/interventions/:salonId" />
                     <Intervention user={user} path="/intervention/:salonId/:salonNbInterventions/:interventionId" />
                     <Dump path="/dump" />
-                    <Query path="/query" />
+                    <Query callUpdateUser={callUpdateUser} path="/query" />
+                    <Log user={user} path="/log" />
                 </Router>
             </div>
             <Footer />

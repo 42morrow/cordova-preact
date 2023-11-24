@@ -5,16 +5,22 @@ import $ from 'jquery';
 
 import {insertRows, deleteAll} from '../db/db';
 import {apiLogin} from '../api/api';
+import {log} from '../lib/log';
 
 export default function User({user, callUpdateUser}) {
 
-    console.log("IN USER");
+    useEffect(() => {
+        log(user, "info", "IN USER, ENTER");
+    }, []);
 
+
+    /*
     function setUser() {
         insertRows('user', [ [null, "laurent.lagarde@gmail.com" , "Laurent Lagarde avec un nom super long", "2023-11-10" ] ])
         .then( () => callUpdateUser() )
         ;
     }
+    */
 
     function login() {
 
@@ -27,12 +33,14 @@ export default function User({user, callUpdateUser}) {
 
         apiLogin($("#identifiant").val(), $("#mdp").val())
         .then( user => {
-            insertRows('user', [ [null, user.username , user.nom, user.date_connexion ] ])
+            insertRows('user', [ [null, user.id, user.username , user.nom, user.date_connexion ] ])
+            log(user, "info", "IN USER >>> LOGIN: "+user.username);
         })
         .then( () => callUpdateUser() )
-        .catch( (data) => {
-            let message = typeof data === "object" && data.hasOwnProperty("message") ? data.message : "Une erreur a été rencontrée";
-            $("#error").html(message)
+        .catch( (error) => {
+            let message = typeof error === "object" && error.hasOwnProperty("message") ? error.message : "Une erreur a été rencontrée";
+            $("#error").html(message);
+            log(user, "error", "IN USER >>> PB LOGIN: "+message);
         })
         ;
 

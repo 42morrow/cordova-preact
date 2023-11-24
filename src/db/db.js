@@ -1,6 +1,8 @@
 import { newPromiseHelper } from 'sql-promise-helper';
 import { dbTables } from '../config/dbTables';
 
+import {log} from '../lib/log';
+
 var db = null;
 var helper = null;
 var tx = null;
@@ -22,7 +24,7 @@ function openDb() {
 
 function dropTableIfExist(table) {
 
-    console.log("dropTableIfExist");
+    log(null, "info", "dbTables >>> dropTableIfExist");
 
     let dropTableInterventionQuery = 'DROP TABLE IF EXISTS '+table;
 
@@ -32,9 +34,7 @@ function dropTableIfExist(table) {
 
 }
 
-export function showTables() {
-
-    console.log("showTables");
+export function getTables() {
 
     let query = 'SELECT * FROM sqlite_master where type="table";';
 
@@ -43,18 +43,16 @@ export function showTables() {
         return helper.executeStatement(query, null);
     }).then(function(res) {
         return new Promise( (resolve) => resolve(res.rows));
-
     });
 
 }
 
 export function createTables() {
 
-    console.log("createTables");
-
     return createTable("intervention", dbTables.intervention)
     .then( () => createTable("user", dbTables.user))
     .then( () => createTable("surveyjs_config", dbTables.surveyjs_config))
+    .then( () => createTable("log", dbTables.log))
     ;
 
 }
@@ -62,13 +60,20 @@ export function createTables() {
 
 function createTable(table, createTablesQuery) {
 
-    console.log("createTables");
+    //log(null, "info", "dbTables >>> createTable "+table);
 
     //dropTableIfExist(table);
 
+    /*
     tx = helper.newBatchTransaction();
     tx.executeStatement(createTablesQuery);
     return tx.commit();
+    */
+
+    tx = helper.newBatchTransaction();
+    return tx.commit().then(function() {
+        return helper.executeStatement(createTablesQuery, null);
+    });
 
 }
 
@@ -86,7 +91,9 @@ export function insertRows (table, rows) {
     });
     */
 
-    console.log("DANS INSERT, ROWS: "+rows.length);
+    if(table != "log") {
+        log(null, "info", "dbTables >>> insertRows in "+table+", nb rows : "+rows.length);
+    }
 
     if(rows.length == 0) {
         return;
@@ -112,10 +119,11 @@ export function insertRows (table, rows) {
 
 export function deleteIds (table, ids) {
 
-    console.log("DANS DELETE, IDS: "+ids.length);
     if(ids.length == 0) {
         return;
     }
+
+    log(null, "info", "dbTables >>> deleteIds in "+table+", ids : "+ids.join(", "));
 
     let deleteQuery =
     'DELETE FROM '+table+' WHERE id IN ('+ids.join(',')+')'
@@ -162,18 +170,29 @@ export function update (table, id, data) {
 
 export function rawQuery (query) {
 
+    /*
     tx = helper.newBatchTransaction();
     tx.executeStatement(query);
     return tx.commit();
+    */
+
+    tx = helper.newBatchTransaction();
+    return tx.commit().then(function() {
+        return helper.executeStatement(query, null);
+
+    })
+    .catch( error => error )
+    ;
 
 }
 
 
-export function getRows(table) {
+export function getRows(table, where = "") {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT * FROM '+table, null);
+        log(null, "info", "getRows >>> query : "+'SELECT * FROM '+table+" "+where);
+        return helper.executeStatement('SELECT * FROM '+table+" "+where, null);
 
     }).then( res => res.rows);
 
@@ -195,10 +214,9 @@ export function dbGetSalons() {
                     id: res.rows.item(i).salon_id,
                     nbInterventions: res.rows.item(i).nb,
                 });
-                console.log("dbGetSalons:");
-                console.log(salons);
             }
         }
+        log(null, "info", "dbTables >>> dbGetSalons, nb : "+salons.length);
 
         return new Promise( (resolve) => resolve(salons));
 
@@ -226,8 +244,7 @@ export function dbGetSalon(salonId) {
                 id: res.rows.item(0).salon_id,
                 nbInterventions: res.rows.item(0).nb,
             };
-            console.log("dbGetSalon:");
-            console.log(salon);
+            log(null, "info", "dbTables >>> dbGetSalon, id : "+salon.id);
         }
 
         return new Promise( (resolve) => resolve(salon));
@@ -251,6 +268,8 @@ export function dbGetInterventions(interventionsApi) {
             }
         }
 
+        log(null, "info", "dbTables >>> dbGetInterventions, nb : "+interventionsDb.length);
+
         return new Promise( (resolve) => resolve({interventionsDb, interventionsApi}));
 
     });
@@ -272,6 +291,8 @@ export function dbGetInterventionsSalon(salonId) {
             }
         }
 
+        log(null, "info", "dbTables >>> dbGetInterventionsSalon, id : "+salonId+", nb : "+interventions.length);
+
         return new Promise( (resolve) => resolve(interventions));
 
     });
@@ -292,10 +313,12 @@ export function dbGetInterventionsATransferer() {
             }
         }
 
+        log(null, "info", "dbTables >>> dbGetInterventionsATransferer, nb : "+interventions.length);
+
         return new Promise( (resolve) => resolve(interventions));
 
     })
-    .catch( error => { console.log("IN dbGetInterventionsATransferer CATCH ERROR"); console.log(error); } )
+    .catch( error => { console.log("IN dbGetInterventionsATransferer CATCH ERROR"); log(null, "error", error); } )
     ;
 
 }
@@ -308,6 +331,9 @@ export function dbGetIntervention(interventionId) {
         return helper.executeStatement('SELECT * FROM intervention WHERE id = ?', [interventionId]);
     }).then(function(res) {
         let intervention = res.rows.item(0);
+
+        log(null, "info", "dbTables >>> dbGetIntervention, id : "+intervention.id);
+
         return new Promise( (resolve) => resolve(intervention));
     });
 
@@ -324,6 +350,9 @@ export function dbGetUser() {
 
     }).then(function(res) {
         let user = res.rows.length > 0 ? res.rows.item(0) : null;
+
+        log(null, "info", "dbTables >>> dbGetUser");
+
         return new Promise( (resolve) => resolve(user));
     });
 
@@ -348,10 +377,13 @@ export function dbGetSurveyjsAllConfigs() {
                 surveyjsQuestionsBySurveyjsId[res.rows.item(i).survey_id] = res.rows.item(i).json_questions;
             }
         }
+
+        log(null, "info", "dbTables >>> dbGetSurveyjsAllConfigs, nb : "+surveyjsQuestionsBySurveyjsId.length);
+
         return new Promise( (resolve) => resolve(surveyjsQuestionsBySurveyjsId));
 
     })
-    .catch( error => console.log(error) )
+    .catch( error => { log(null, "error", error); })
     ;
 
 }
@@ -365,10 +397,13 @@ export function dbGetSurveyjsConfig(surveyjsId) {
 
     }).then(function(res) {
         let surveyjsJsonQuestions = res.rows.length > 0 ? res.rows.item(0).json_questions : null;
+
+        log(null, "info", "dbTables >>> dbGetSurveyjsConfig, id : "+surveyjsId);
+
         return new Promise( (resolve) => resolve(surveyjsJsonQuestions));
 
     })
-    .catch( error => console.log(error) )
+    .catch( error => { log(null, "error", error); } )
     ;
 
 }

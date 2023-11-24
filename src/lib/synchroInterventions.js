@@ -1,5 +1,6 @@
 import {createTables, dbGetInterventions, dbGetInterventionsATransferer, update, insertRows, deleteIds, dbGetSurveyjsAllConfigs} from '../db/db';
 import {apiGetInterventions, apiSetInterventions} from '../api/api';
+import {log} from '../lib/log';
 
 import {structureIntervention} from '../config/structureIntervention';
 
@@ -8,8 +9,8 @@ var synchroInterventionsEncours = false;
 export function synchroInterventions(user) {
 
     if(synchroInterventionsEncours) {
-        console.log(" >>> SYNCHRO INTERVENTIONS::BYPASS");
-        return Promise.resolve();
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::BYPASS");
+        return Promise.resolve("bypass");
     }
     else {
         synchroInterventionsEncours = true;
@@ -18,7 +19,7 @@ export function synchroInterventions(user) {
     var interventionsASupprimer = [];
     var globalSurveyjsQuestionsBySurveyjsId = null;
 
-    console.log(" >>> SYNCHRO INTERVENTIONS::START");
+    log(user, "info", " >>> SYNCHRO INTERVENTIONS::START");
     return createTables()
     .then( () => dbGetSurveyjsAllConfigs() )
     .then( (surveyjsQuestionsBySurveyjsId) => {
@@ -26,12 +27,11 @@ export function synchroInterventions(user) {
         return dbGetInterventionsATransferer();
     })
     .then( interventionsATransferer => {
-        console.log(" >>> SYNCHRO INTERVENTIONS::dbGetInterventionsATransferer done ("+interventionsATransferer.length+")")
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::dbGetInterventionsATransferer done ("+interventionsATransferer.length+")")
         if(interventionsATransferer.length > 0) {
             let apiFields = [];
             interventionsATransferer.forEach( intervention => {
-                console.log("Une intervention à transférer:");
-                console.log(intervention);
+                log(user, "info", " >>> SYNCHRO INTERVENTIONS::une intervention à transférer sur le backend, roid : "+intervention.roid);
                 apiFields.push({
                     id: intervention.id,
                     interventionId: intervention.roid,
@@ -40,21 +40,21 @@ export function synchroInterventions(user) {
                     surveyjsJsonReponses: intervention.surveyjs_json_reponses,
                 });
             });
-            return apiSetInterventions({ userId: user.id, interventions: apiFields });
+            return apiSetInterventions({ userId: user.roid, interventions: apiFields });
         }
         else {
             return Promise.resolve([]);
         }
     })
     .then( (apiFields) => {
-        console.log(" >>> SYNCHRO INTERVENTIONS::apiSetInterventions done, now : update des interventions en db ("+apiFields.length+")");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::apiSetInterventions done, now : update des interventions en db ("+apiFields.length+")");
         if(apiFields.length > 0) {
             console.log(apiFields);
         }
         apiFields.forEach( intervention => update('intervention', intervention.id, {statut: 'terminee'}));
     })
     .then( () => {
-        console.log(" >>> SYNCHRO INTERVENTIONS::update des interventions en db done, now : apiGetInterventions");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::update des interventions en db done, now : apiGetInterventions");
         return apiGetInterventions();
     })
     .then( interventionsApi => {
@@ -88,11 +88,11 @@ export function synchroInterventions(user) {
         return interventionsApiDbFormatted;
     } )
     .then( (interventionsApi) => {
-        console.log(" >>> SYNCHRO INTERVENTIONS::formatage des interventions api avec la structure db done, now : dbGetInterventions");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::formatage des interventions api avec la structure db done, now : dbGetInterventions");
         return dbGetInterventions(interventionsApi);
     })
     .then( ({interventionsDb, interventionsApi}) => {
-        console.log(" >>> SYNCHRO INTERVENTIONS::dbGetInterventions done ("+interventionsDb.length+"), now : APPAREILLAGE INTERVENTIONS API ("+interventionsApi.length+") / DB ("+interventionsDb.length+")");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::dbGetInterventions done ("+interventionsDb.length+"), now : APPAREILLAGE INTERVENTIONS API ("+interventionsApi.length+") / DB ("+interventionsDb.length+")");
         let interventionsACreer = [];
         interventionsApi.forEach(interventionApi => {
             let interventionDb = interventionsDb.find( intervention => intervention.roid === interventionApi[structureIntervention.roid.index]);
@@ -104,7 +104,7 @@ export function synchroInterventions(user) {
                 && interventionDb.statut != 'termineeatransferer'
                 && interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)
                 ) {
-                    console.log("À ASUPPRIMER CAS 1 : "+interventionDb.id);
+                    log(user, "info", " >>> SYNCHRO INTERVENTIONS::INTERVENTIONS API / DB, À ASUPPRIMER CAS 1 : "+interventionDb.id);
                     interventionsASupprimer.push(interventionDb.id);
                 }
             }
@@ -115,25 +115,35 @@ export function synchroInterventions(user) {
             && interventionDb.statut != 'termineeatransferer'
             && interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)
             ) {
-                console.log("À ASUPPRIMER CAS 2 : "+interventionDb.id);
+                log(user, "info", " >>> SYNCHRO INTERVENTIONS::INTERVENTIONS API / DB, À ASUPPRIMER CAS 2 : "+interventionDb.id);
                 interventionsASupprimer.push(interventionDb.id);
             }
         });
         return interventionsACreer;
     })
     .then( interventionsACreer => {
-        console.log(" >>> SYNCHRO INTERVENTIONS::APPAREILLAGE INTERVENTIONS API / DB done, now : création db des interventions manquantes ("+interventionsACreer.length+")");
+        // LOG
+        let roids = [];
+        interventionsACreer.forEach( itv => roids.push(itv[1]));
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::APPAREILLAGE INTERVENTIONS API / DB done, now : création db des interventions manquantes ("+interventionsACreer.length+"), roids = "+roids.join(", "));
+        // END LOG
         return insertRows('intervention', interventionsACreer);
     })
     .then( () => {
-        console.log(" >>> SYNCHRO INTERVENTIONS::création db des interventions manquantes done, now : suppression db des interventions en trop("+interventionsASupprimer.length+")");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::création db des interventions manquantes done, now : suppression db des interventions en trop("+interventionsASupprimer.length+")");
         return deleteIds('intervention', interventionsASupprimer);
     })
     .then( () => {
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::END OK, now returns done");
         synchroInterventionsEncours = false;
-        return Promise.resolve();
+        return "done";
     })
-    .catch( error => { console.log("IN SYNCHRO INTERVENTIONS CATCH ERROR"); console.log(error); } )
+    .catch( error => {
+        log(user, "error", ">>> SYNCHRO INTERVENTIONS::CATCH ERROR"+typeof error == "string" ? error : error.toString());
+        synchroInterventionsEncours = false;
+        return "done";
+    })
+    ;
 
 }
 

@@ -17,6 +17,7 @@ android:
 	cordova run android
 
 apk:
+	@echo '!!!!!!!!!!!! ATTENTION : ne pas oublier de modifier ENV_API_ENDPOINT dans webpack.config.js'
 	cordova build android --release --buildConfig
 	cp platforms/android/app/build/outputs/apk/release/app-release.apk ../bvp/mobile-app/bvp
 

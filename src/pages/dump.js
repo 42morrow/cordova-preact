@@ -3,7 +3,7 @@ import {useState, useEffect} from 'preact/hooks';
 import {Link, route} from 'preact-router';
 import $ from 'jquery';
 
-import {createTables, showTables, getRows} from '../db/db';
+import {createTables, getTables, getRows} from '../db/db';
 import {apiGetInterventions} from '../api/api';
 
 export default function Dump() {
@@ -20,7 +20,7 @@ export default function Dump() {
     useEffect(() => {
         console.log("useEffect setDbTables");
         createTables()
-        .then( () => showTables() )
+        .then( () => getTables() )
         .then( (rows) => {
             let dbTables = [];
             if(rows.length > 0) {

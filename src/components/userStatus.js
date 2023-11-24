@@ -4,13 +4,14 @@ import {Link} from 'preact-router';
 import $ from 'jquery';
 import textFit from 'textfit';
 
+import {log} from '../lib/log';
+
 export default function UserStatus({user, statutConnexionForDisplay}) {
 
-    console.log("IN COMPONENT USER:");
-    console.log(user);
-
     useEffect(() => {
-    }, []);
+        console.log(user);
+        log(user, "info", "IN COMPONENT USER STATUS >>> user : "+(user != null ? user.toString() : "null"));
+    }, [user]);
 
     var userInfos = null;
 

@@ -4,49 +4,58 @@ import {Link, route} from 'preact-router';
 
 import {dbGetInterventionsSalon, dbGetSalon} from '../db/db';
 import {statutsIntervention} from '../config/statutsIntervention';
+import {log} from '../lib/log';
 
-export default function Interventions({user, salonId, synchroDone}) {
+export default function Interventions({user, salonId, synchroInterventionsDone}) {
 
-    console.log("IN INTERVENTIONS, salonId:: "+salonId);
+    useEffect(() => {
+        log(user, "info", "IN INTERVENTIONS, ENTER, salonId : "+salonId);
+    }, []);
+
 
     if(user == null) {
         route('/user');
     }
 
 
+    const [init, setInit] = useState(false);
     const [salon, setSalon] = useState(null);
     const [interventions, setInterventions] = useState(null);
     const [salonNbInterventions, setSalonNbInterventions] = useState(0);
 
 
     useEffect(() => {
-        console.log("useEffect setSalon");
-        dbGetSalon(salonId).then( (salon) => { console.log(salon); setSalon(salon); } );
+        dbGetSalon(salonId).then( (salon) => {
+            log(user, "info", "IN INTERVENTIONS >>> setSalon : "+salon); setSalon(salon);
+            setInit(true);
+        });
     }, []);
 
 
     useEffect(() => {
-        console.log("useEffect setInterventions");
-        dbGetInterventionsSalon(salonId).then( (interventionsDuSalon) => {
-            setSalonNbInterventions(interventionsDuSalon.length);
-            console.log(interventionsDuSalon);
-            let interventionsParDate = {};
-            interventionsDuSalon.map( intervention => {
-                if(!interventionsParDate.hasOwnProperty(intervention.date)) {
-                    interventionsParDate[intervention.date] = [];
-                }
-                interventionsParDate[intervention.date].push(intervention);
+
+        //if(synchroInterventionsDone) {
+            dbGetInterventionsSalon(salonId).then( (interventionsDuSalon) => {
+                setSalonNbInterventions(interventionsDuSalon.length);
+                log(user, "info", "IN INTERVENTIONS >>> setInterventions : "+interventionsDuSalon.length);
+                let interventionsParDate = {};
+                interventionsDuSalon.map( intervention => {
+                    if(!interventionsParDate.hasOwnProperty(intervention.date)) {
+                        interventionsParDate[intervention.date] = [];
+                    }
+                    interventionsParDate[intervention.date].push(intervention);
+                });
+                const interventionsParDateOrdonnee = Object.keys(interventionsParDate).sort().reduce(
+                    (obj, key) => {
+                      obj[key.split("-").reverse().join("/")] = interventionsParDate[key];
+                      return obj;
+                    },
+                    {}
+                );
+                setInterventions(interventionsParDateOrdonnee);
             });
-            const interventionsParDateOrdonnee = Object.keys(interventionsParDate).sort().reduce(
-                (obj, key) => {
-                  obj[key.split("-").reverse().join("/")] = interventionsParDate[key];
-                  return obj;
-                },
-                {}
-            );
-            setInterventions(interventionsParDateOrdonnee);
-        });
-    }, [synchroDone]);
+        //}
+    }, [synchroInterventionsDone, init]);
 
 
     function getHeure(intervention) {
@@ -59,10 +68,8 @@ export default function Interventions({user, salonId, synchroDone}) {
     }
 
     if(!interventions || !salon) {
-        return <div className="text-center p-3">Veuillez patienter</div>
+        return <div className="text-center p-3">Veuillez patienter <span class="color-silver">(interventions)</span></div>
     }
-
-    console.log("NB: "+Object.keys(interventions).length);
 
     return (
         <div>

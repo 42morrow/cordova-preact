@@ -45,6 +45,21 @@ export function apiSetInterventions(data) {
 
 }
 
+export function apiSetLog(data) {
+
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            headers: { "Authorization": "ApiKey "+ENV_API_KEY },
+            type: 'POST',
+            url: ENV_API_ENDPOINT + "set-log",
+            data: JSON.stringify(data),
+            error: ( error ) => { console.log('AJAX ERROR'); reject(error); },
+            success: (data) => { console.log('AJAX SUCCESS'); resolve(data)},
+        })
+    });
+
+}
+
 export function apiLogin(username, password) {
 
     return new Promise((resolve, reject) => {
@@ -56,8 +71,8 @@ export function apiLogin(username, password) {
                 username: username,
                 password: password,
             }),
-            error: ( error ) => { console.log('AJAX ERROR'); console.log(error); reject(error.responseJSON); },
-            success: ( data ) => { console.log('AJAX SUCCESS'); resolve(data); },
+            error: ( error ) => { reject(error.hasOwnProperty("responseJSON") ? error.responseJSON : error); },
+            success: ( data ) => { resolve(data); },
         })
     });
 

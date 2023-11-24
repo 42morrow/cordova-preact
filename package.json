@@ -17,6 +17,7 @@
     "cordova-android": "^12.0.0",
     "cordova-browser": "^7.0.0",
     "cordova-plugin-buildinfo": "^4.0.0",
+    "cordova-plugin-device": "^2.1.0",
     "cordova-plugin-file": "^8.0.0",
     "cordova-plugin-file-transfer": "github:apache/cordova-plugin-file-transfer",
     "cordova-plugin-network-information": "^3.0.0",
@@ -34,7 +35,8 @@
       "cordova-plugin-file-transfer": {},
       "cordova-sqlite-storage": {},
       "cordova-plugin-network-information": {},
-      "cordova-plugin-buildinfo": {}
+      "cordova-plugin-buildinfo": {},
+      "cordova-plugin-device": {}
     },
     "platforms": [
       "android",

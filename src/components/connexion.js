@@ -2,22 +2,26 @@ import {h} from 'preact';
 import {useState, useEffect} from 'preact/hooks';
 import $ from 'jquery';
 
-export default function Connexion({statutConnexionForDisplay, btnSyncClick, syncIsFinished}) {
+import {log} from '../lib/log';
 
-    console.log("IN COMPONENT CONNEXION");
+export default function Connexion({user, statutConnexionForDisplay, btnSyncClick, syncIsFinished}) {
+
+    useEffect(() => {
+        log(user, "info", "IN COMPONENT CONNEXION");
+    }, []);
 
     function refresh() {
-        console.log("refresh");
+        log(user, "info", "IN COMPONENT CONNEXION >>> REFRESH CALL");
         btnSyncClick();
     }
 
     function logConnexion() {
-        alert("navigator.connection.type: "+navigator.connection.type);
+        log(user, "info", "IN COMPONENT CONNEXION >>> navigator.connection.type = "+navigator.connection.type);
         console.log(navigator);
     }
 
     useEffect(() => {
-        console.log("IN CONNEXION USEEFFECT, statutConnexionForDisplay: "+(statutConnexionForDisplay != null ? statutConnexionForDisplay : "null"));
+        log(user, "info", "IN COMPONENT CONNEXION >>> statutConnexionForDisplay changed to : "+(statutConnexionForDisplay ? "true" : "false"));
     }, [statutConnexionForDisplay]);
 
     return (
