@@ -13,7 +13,7 @@ chrome:
 	cordova run --target=chrome
 
 android:
-	cordova build -- --webpack.config webpack.config.js
+	cordova build --release -- --webpack.config webpack.config.js
 	cordova run android
 
 apk:

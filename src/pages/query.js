@@ -3,12 +3,16 @@ import {useState, useEffect} from 'preact/hooks';
 import {Link, route} from 'preact-router';
 import $ from 'jquery';
 
-import { dbTables } from '../config/dbTables';
+import { dbDefineTables } from '../config/dbDefineTables';
 import {rawQuery} from '../db/db';
+import {log} from '../lib/log';
 
-export default function Query({callUpdateUser}) {
+export default function Query({user, callUpdateUser}) {
 
-    console.log("IN QUERY");
+    useEffect(() => {
+        log(user, "info", "IN QUERY, ENTER");
+    }, []);
+
 
     const [queryResultRows, setQueryResultRows] = useState(null);
     const [queryResultFormated, setQueryResultFormated] = useState([]);
@@ -17,6 +21,7 @@ export default function Query({callUpdateUser}) {
         let rowsFormated = [];
         if(queryResultRows != null) {
             if(queryResultRows.length > 0) {
+                log(user, "info", "IN QUERY >>> query() result nb rows : "+queryResultRows.length);
                 for(let i = 0; i < queryResultRows.length; i++) {
                     console.log(queryResultRows.item(i));
                     rowsFormated.push("ROW "+(i + 1));
@@ -28,6 +33,7 @@ export default function Query({callUpdateUser}) {
                 }
             }
             else {
+                log(user, "info", "IN QUERY >>> query() result :Aucun résultat");
                 rowsFormated.push("Aucun résultat");
             }
         }
@@ -48,7 +54,6 @@ export default function Query({callUpdateUser}) {
 
         rawQuery($("#query").val())
         .then( (res) => {
-            console.log(res);
             if(typeof res == "object"
             && res.hasOwnProperty("rows")
             && typeof res.rows == "object"
@@ -60,9 +65,13 @@ export default function Query({callUpdateUser}) {
             && res.hasOwnProperty("message")
             ) {
                 $("#error").html(res.message);
+                log(user, "error", "IN QUERY >>> query() erreur 1 : "+res.message);
             }
         })
-        .catch( error => $("#error").html(error) )
+        .catch( error => {
+            $("#error").html(error);
+            log(user, "error", "IN QUERY >>> query() erreur 2 : "+(typeof error == "string" ? error : error.toString()));
+        })
         ;
 
     }
@@ -70,19 +79,26 @@ export default function Query({callUpdateUser}) {
 
     function dropTables() {
 
+        log(user, "info", "IN QUERY >>> dropTables()");
         var queries = [];
-        Object.keys(dbTables).map( (dbTable) => {
-            queries.push(rawQuery("DROP TABLE IF EXISTS "+dbTable));
+        Object.keys(dbDefineTables).map( (dbTable) => {
+            let query = "DROP TABLE IF EXISTS "+dbTable;
+            log(user, "info", "IN QUERY >>> dropTables() query : "+query);
+            queries.push(rawQuery(query));
         });
 
         $("#error").html("");
 
         Promise.all(queries)
         .then( () => {
+            log(user, "info", "IN QUERY >>> dropTables() done");
             callUpdateUser();
             route('/dump');
         })
-        .catch( error => $("#error").html(error) )
+        .catch( error => {
+            log(user, "error", "IN QUERY >>> dropTables() erreur : "+(typeof error == "string" ? error : error.toString()));
+            $("#error").html(error);
+        })
         ;
 
     }

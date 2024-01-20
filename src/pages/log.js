@@ -9,7 +9,9 @@ import {log} from '../lib/log';
 
 export default function Log({user}) {
 
-    console.log("IN LOG");
+    useEffect(() => {
+        log(user, "info", "IN LOG, ENTER");
+    }, []);
 
     const [logLines, setLogLines] = useState([]);
     const [logIsSync, setLogIsSync] = useState(false);
@@ -58,7 +60,7 @@ export default function Log({user}) {
             setLogIsSync(true);
             setRefresh(false);
         })
-        .catch( (error) => { log(user, "error", typeof error == "string" ? error : error.toString()); })
+        .catch( (error) => log(user, "error", "IN LOG >>> error : "+error.message) )
         ;
 
     }, [refresh]);

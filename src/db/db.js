@@ -1,5 +1,5 @@
 import { newPromiseHelper } from 'sql-promise-helper';
-import { dbTables } from '../config/dbTables';
+import { dbDefineTables } from '../config/dbDefineTables';
 
 import {log} from '../lib/log';
 
@@ -24,7 +24,7 @@ function openDb() {
 
 function dropTableIfExist(table) {
 
-    log(null, "info", "dbTables >>> dropTableIfExist");
+    log(null, "info", "db/db.js >>> dropTableIfExist");
 
     let dropTableInterventionQuery = 'DROP TABLE IF EXISTS '+table;
 
@@ -49,30 +49,33 @@ export function getTables() {
 
 export function createTables() {
 
-    return createTable("intervention", dbTables.intervention)
-    .then( () => createTable("user", dbTables.user))
-    .then( () => createTable("surveyjs_config", dbTables.surveyjs_config))
-    .then( () => createTable("log", dbTables.log))
+    return createTable("intervention")
+    .then( () => createTable("user"))
+    .then( () => createTable("surveyjs_config"))
+    .then( () => createTable("log"))
     ;
 
 }
 
 
-function createTable(table, createTablesQuery) {
+function createTable(table) {
 
-    //log(null, "info", "dbTables >>> createTable "+table);
+    let tableInfos = dbDefineTables[table];
+    let createQuery = 'CREATE TABLE IF NOT EXISTS '+table+' ('+"\n";
+    let period = "";
+    Object.keys(tableInfos).forEach( columnName => {
+        createQuery += period+columnName+" "+tableInfos[columnName];
+        period = ",\n";
+    })
+    createQuery += "\n"+');';
+
+    //console.log("db/db.js >>> createTable "+createQuery);
 
     //dropTableIfExist(table);
 
-    /*
-    tx = helper.newBatchTransaction();
-    tx.executeStatement(createTablesQuery);
-    return tx.commit();
-    */
-
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement(createTablesQuery, null);
+        return helper.executeStatement(createQuery, null);
     });
 
 }
@@ -92,7 +95,7 @@ export function insertRows (table, rows) {
     */
 
     if(table != "log") {
-        log(null, "info", "dbTables >>> insertRows in "+table+", nb rows : "+rows.length);
+        log(null, "info", "db/db.js >>> insertRows in "+table+", nb rows : "+rows.length);
     }
 
     if(rows.length == 0) {
@@ -123,7 +126,7 @@ export function deleteIds (table, ids) {
         return;
     }
 
-    log(null, "info", "dbTables >>> deleteIds in "+table+", ids : "+ids.join(", "));
+    log(null, "info", "db/db.js >>> deleteIds in "+table+", ids : "+ids.join(", "));
 
     let deleteQuery =
     'DELETE FROM '+table+' WHERE id IN ('+ids.join(',')+')'
@@ -187,6 +190,30 @@ export function rawQuery (query) {
 }
 
 
+export function getColumns(table) {
+
+    tx = helper.newBatchTransaction();
+    return tx.commit().then(function() {
+        log(null, "info", "getColumns >>> table : "+table);
+        return helper.executeStatement('PRAGMA table_info('+table+')', null);
+
+    }).then(function(res) {
+        var columns = [];
+        if(res.rows.length > 0) {
+            for(let i = 0; i < res.rows.length; i++) {
+                columns.push(res.rows.item(i).name);
+            }
+        }
+        log(null, "info", "db/db.js >>> getColumns, columns : "+columns.join(", "));
+        return new Promise( (resolve) => resolve({name: table, columns: columns}));
+
+    })
+    .catch( error => error )
+    ;
+
+}
+
+
 export function getRows(table, where = "") {
 
     tx = helper.newBatchTransaction();
@@ -216,7 +243,7 @@ export function dbGetSalons() {
                 });
             }
         }
-        log(null, "info", "dbTables >>> dbGetSalons, nb : "+salons.length);
+        log(null, "info", "db/db.js >>> dbGetSalons, nb : "+salons.length);
 
         return new Promise( (resolve) => resolve(salons));
 
@@ -244,7 +271,7 @@ export function dbGetSalon(salonId) {
                 id: res.rows.item(0).salon_id,
                 nbInterventions: res.rows.item(0).nb,
             };
-            log(null, "info", "dbTables >>> dbGetSalon, id : "+salon.id);
+            log(null, "info", "db/db.js >>> dbGetSalon, id : "+salon.id);
         }
 
         return new Promise( (resolve) => resolve(salon));
@@ -268,7 +295,7 @@ export function dbGetInterventions(interventionsApi) {
             }
         }
 
-        log(null, "info", "dbTables >>> dbGetInterventions, nb : "+interventionsDb.length);
+        log(null, "info", "db/db.js >>> dbGetInterventions, nb : "+interventionsDb.length);
 
         return new Promise( (resolve) => resolve({interventionsDb, interventionsApi}));
 
@@ -291,7 +318,7 @@ export function dbGetInterventionsSalon(salonId) {
             }
         }
 
-        log(null, "info", "dbTables >>> dbGetInterventionsSalon, id : "+salonId+", nb : "+interventions.length);
+        log(null, "info", "db/db.js >>> dbGetInterventionsSalon, id : "+salonId+", nb : "+interventions.length);
 
         return new Promise( (resolve) => resolve(interventions));
 
@@ -313,7 +340,7 @@ export function dbGetInterventionsATransferer() {
             }
         }
 
-        log(null, "info", "dbTables >>> dbGetInterventionsATransferer, nb : "+interventions.length);
+        log(null, "info", "db/db.js >>> dbGetInterventionsATransferer, nb : "+interventions.length);
 
         return new Promise( (resolve) => resolve(interventions));
 
@@ -332,7 +359,7 @@ export function dbGetIntervention(interventionId) {
     }).then(function(res) {
         let intervention = res.rows.item(0);
 
-        log(null, "info", "dbTables >>> dbGetIntervention, id : "+intervention.id);
+        log(null, "info", "db/db.js >>> dbGetIntervention, id : "+intervention.id);
 
         return new Promise( (resolve) => resolve(intervention));
     });
@@ -351,7 +378,7 @@ export function dbGetUser() {
     }).then(function(res) {
         let user = res.rows.length > 0 ? res.rows.item(0) : null;
 
-        log(null, "info", "dbTables >>> dbGetUser");
+        log(null, "info", "db/db.js >>> dbGetUser");
 
         return new Promise( (resolve) => resolve(user));
     });
@@ -378,7 +405,7 @@ export function dbGetSurveyjsAllConfigs() {
             }
         }
 
-        log(null, "info", "dbTables >>> dbGetSurveyjsAllConfigs, nb : "+surveyjsQuestionsBySurveyjsId.length);
+        log(null, "info", "db/db.js >>> dbGetSurveyjsAllConfigs, nb : "+surveyjsQuestionsBySurveyjsId.length);
 
         return new Promise( (resolve) => resolve(surveyjsQuestionsBySurveyjsId));
 
@@ -398,7 +425,7 @@ export function dbGetSurveyjsConfig(surveyjsId) {
     }).then(function(res) {
         let surveyjsJsonQuestions = res.rows.length > 0 ? res.rows.item(0).json_questions : null;
 
-        log(null, "info", "dbTables >>> dbGetSurveyjsConfig, id : "+surveyjsId);
+        log(null, "info", "db/db.js >>> dbGetSurveyjsConfig, id : "+surveyjsId);
 
         return new Promise( (resolve) => resolve(surveyjsJsonQuestions));
 

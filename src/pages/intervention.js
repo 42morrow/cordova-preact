@@ -52,11 +52,16 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
         }
 
         survey.onComplete.add((sender, options) => {
+            let majLocal = new Date().toISOString();
+console.log("sender.DATA");
+console.log(JSON.stringify(sender.data));
             let dbFields = {
-                surveyjs_json_reponses: JSON.stringify(sender.data),
+                surveyjs_json_reponses: JSON.stringify(sender.data).replace(/'/g, ' '),
                 statut: 'termineeatransferer',
-                maj_local: new Date().toISOString(),
+                maj_local: majLocal,
             };
+console.log("sender.DATA AFTER");
+console.log(JSON.stringify(sender.data).replace(/'/g, "\\'"));
             update('intervention', interventionId, dbFields)
             .then( () => {
                 log(user, "info", "IN INTERVENTION >>> maj intervention DB (statut termineeatransferer) done");
@@ -67,6 +72,7 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
                     surveyjsQuestionnaireId: intervention.surveyjs_id,
                     surveyjsJsonQuestions: surveyjsJsonQuestions,
                     surveyjsJsonReponses: JSON.stringify(sender.data),
+                    majMobile: majLocal,
                     }],
                 };
                 return apiSetInterventions(majUneIntervention);
@@ -82,7 +88,7 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
             .then( () => {
                 log(user, "info", "IN INTERVENTION >>> maj intervention DB (statut terminee) done");
             })
-            .catch( (error) => { log(user, "error", typeof error == "string" ? error : error.toString()); })
+            .catch( (error) => { console.log(error); log(user, "error", typeof error == "string" ? error : error.toString()); })
             .finally( () => {
                 log(user, "info", "IN INTERVENTION >>> finally : route /interventions/"+salonId);
                 route('/interventions/'+salonId);

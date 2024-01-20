@@ -5,20 +5,21 @@ import $ from 'jquery';
 
 import {createTables, getTables, getRows} from '../db/db';
 import {apiGetInterventions} from '../api/api';
+import {log} from '../lib/log';
 
-export default function Dump() {
+export default function Dump({user}) {
 
-    console.log("IN DUMP");
+    useEffect(() => {
+        log(user, "info", "IN DUMP, ENTER");
+    }, []);
 
     const [dbTables, setDbTables] = useState([]);
     const [dbInterventions, setDbInterventions] = useState([]);
     const [dbUsers, setDbUsers] = useState([]);
     const [dbSurveyjsConfig, setDbSurveyjsConfig] = useState([]);
     const [apiInterventions, setApiInterventions] = useState([]);
-    const [update, setUpdate] = useState(false);
 
     useEffect(() => {
-        console.log("useEffect setDbTables");
         createTables()
         .then( () => getTables() )
         .then( (rows) => {
@@ -68,8 +69,9 @@ export default function Dump() {
         .then( apiInterventions => {
             setApiInterventions(apiInterventions);
         })
+        .then( () => log(user, "info", "IN DUMP >>> all récups done") )
         ;
-    }, [update]);
+    }, []);
 
     return (
         <div>

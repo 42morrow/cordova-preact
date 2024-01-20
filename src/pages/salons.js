@@ -4,11 +4,8 @@ import {useState, useEffect} from 'preact/hooks';
 
 require('../db/db');
 
-import {apiGetInterventions, apiSetInterventions} from '../api/api';
-import {dbGetSalons, dbGetInterventions, dbGetInterventionsATransferer, update, insertRows, deleteIds} from '../db/db';
+import {dbGetSalons} from '../db/db';
 import {log} from '../lib/log';
-
-import {structureIntervention} from '../config/structureIntervention';
 
 export default function Salons({user, synchroInterventionsDone}) {
 

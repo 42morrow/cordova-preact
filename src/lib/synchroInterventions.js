@@ -1,10 +1,57 @@
-import {createTables, dbGetInterventions, dbGetInterventionsATransferer, update, insertRows, deleteIds, dbGetSurveyjsAllConfigs} from '../db/db';
+import {createTables, dbGetInterventions, dbGetInterventionsATransferer, update, insertRows, deleteIds, dbGetSurveyjsAllConfigs, getColumns} from '../db/db';
 import {apiGetInterventions, apiSetInterventions} from '../api/api';
 import {log} from '../lib/log';
 
-import {structureIntervention} from '../config/structureIntervention';
+import { dbDefineTables } from '../config/dbDefineTables';
+
+import {structureInterventionDb, structureInterventionApi} from '../config/structureIntervention';
 
 var synchroInterventionsEncours = false;
+
+
+function checkStructureApi(interventionApi) {
+    let check = true;
+    if(Object.keys(interventionApi).length != Object.keys(structureInterventionApi).length) {
+        check = false;
+    }
+    else {
+        Object.keys(interventionApi).forEach( propertyApi => {
+            if(typeof Object.keys(structureInterventionApi).find( propertyStructure => propertyStructure == propertyApi) == "undefined") {
+                check = false;
+            }
+        });
+    }
+    if(check === false) {
+        check = "API : "+Object.keys(interventionApi).join(", ")+", APPLI : "+Object.keys(structureInterventionApi).join(", ")
+    }
+    return check;
+}
+
+
+function checkStructureDb(tableName, tableColumns) {
+    log(null, "info", " >>> SYNCHRO INTERVENTIONS::checkStructureDb : "+tableName);
+    let check = true;
+    if(!dbDefineTables.hasOwnProperty(tableName)) {
+        return false;
+    }
+    let definedColumns = dbDefineTables[tableName];
+    log(null, "info", " >>> SYNCHRO INTERVENTIONS::checkStructureDb Nb clés : "+tableColumns.length+" / "+Object.keys(definedColumns).length);
+    if(tableColumns.length != Object.keys(definedColumns).length) {
+        check = false;
+    }
+    else {
+        tableColumns.forEach( tableColumn => {
+            if(typeof Object.keys(definedColumns).find( definedColumn => definedColumn == tableColumn) == "undefined") {
+                check = false;
+            }
+        });
+    }
+    if(check === false) {
+        check = "DB : "+tableColumns.join(", ")+", DÉFINI DANS L'APPLI : "+Object.keys(definedColumns).join(", ")
+    }
+    return check;
+}
+
 
 export function synchroInterventions(user) {
 
@@ -21,6 +68,24 @@ export function synchroInterventions(user) {
 
     log(user, "info", " >>> SYNCHRO INTERVENTIONS::START");
     return createTables()
+    .then( () => {
+        var queries = [];
+        Object.keys(dbDefineTables).map( (dbTable) => {
+            queries.push(getColumns(dbTable));
+        });
+        return Promise.all(queries)
+    })
+    .then( (promiseAllValues) => {
+        console.log("promiseAllValues");
+        console.log(promiseAllValues);
+        promiseAllValues.forEach( table => {
+            let check = checkStructureDb(table.name, table.columns);
+            if(check !== true) {
+                log(user, "error", " >>> SYNCHRO INTERVENTIONS::checkStructureDb "+table.name+" !== true");
+                throw new Error("Structure table db "+table.name+" incorrecte : "+check);
+            }
+        })
+    })
     .then( () => dbGetSurveyjsAllConfigs() )
     .then( (surveyjsQuestionsBySurveyjsId) => {
         globalSurveyjsQuestionsBySurveyjsId = surveyjsQuestionsBySurveyjsId;
@@ -38,6 +103,7 @@ export function synchroInterventions(user) {
                     surveyjsQuestionnaireId: intervention.surveyjs_id,
                     surveyjsJsonQuestions: intervention.surveyjs_id in globalSurveyjsQuestionsBySurveyjsId ? globalSurveyjsQuestionsBySurveyjsId[intervention.surveyjs_id] : null,
                     surveyjsJsonReponses: intervention.surveyjs_json_reponses,
+                    majMobile: intervention.maj_local,
                 });
             });
             return apiSetInterventions({ userId: user.roid, interventions: apiFields });
@@ -47,7 +113,7 @@ export function synchroInterventions(user) {
         }
     })
     .then( (apiFields) => {
-        log(user, "info", " >>> SYNCHRO INTERVENTIONS::apiSetInterventions done, now : update des interventions en db ("+apiFields.length+")");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::apiSetInterventions done, now : update des interventions en db, statut termineeatransfere => terminee ("+apiFields.length+")");
         if(apiFields.length > 0) {
             console.log(apiFields);
         }
@@ -60,11 +126,17 @@ export function synchroInterventions(user) {
     .then( interventionsApi => {
         if(interventionsApi.hasOwnProperty("message")) {
             alert(interventionsApi.message);
-            Promise.reject();
+            log(user, "error", " >>> SYNCHRO INTERVENTIONS::apiGetInterventions, erreur : "+interventionsApi.message);
+            throw new Error(interventionsApi.message);
         }
-        console.log(" >>> SYNCHRO INTERVENTIONS::apiGetInterventions done ("+interventionsApi.length+"), now : formatage des interventions api avec la structure db, résultat :");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::apiGetInterventions done ("+interventionsApi.length+"), now : formatage des interventions api avec la structure db");
         let interventionsApiDbFormatted = [];
         interventionsApi.map( intervention => {
+            let check = checkStructureApi(intervention);
+            if(check !== true) {
+                log(user, "error", " >>> SYNCHRO INTERVENTIONS::checkStructureApi !== true");
+                throw new Error("Structure interventions api incorrecte : "+check);
+            }
             let arrayIntervention = [
                 null,
                 intervention.id,
@@ -76,6 +148,12 @@ export function synchroInterventions(user) {
                 intervention.heure,
                 intervention.type,
                 intervention.typeLabel,
+                intervention.precisions,
+                intervention.hall,
+                intervention.stand,
+                intervention.contact_salon,
+                intervention.telephone,
+                intervention.precisions_salon,
                 intervention.surveyjsId,
                 intervention.surveyjsReponses,
                 intervention.statut,
@@ -95,12 +173,12 @@ export function synchroInterventions(user) {
         log(user, "info", " >>> SYNCHRO INTERVENTIONS::dbGetInterventions done ("+interventionsDb.length+"), now : APPAREILLAGE INTERVENTIONS API ("+interventionsApi.length+") / DB ("+interventionsDb.length+")");
         let interventionsACreer = [];
         interventionsApi.forEach(interventionApi => {
-            let interventionDb = interventionsDb.find( intervention => intervention.roid === interventionApi[structureIntervention.roid.index]);
+            let interventionDb = interventionsDb.find( intervention => intervention.roid === interventionApi[structureInterventionDb.roid.index]);
             if(typeof interventionDb === "undefined") {
                 interventionsACreer.push(interventionApi);
             }
             else {
-                if(interventionApi[structureIntervention.statut.index] != 'afaire' // en théorie impossible car on envoie que les afaire
+                if(interventionApi[structureInterventionDb.statut.index] != 'afaire' // en théorie impossible car on envoie que les afaire
                 && interventionDb.statut != 'termineeatransferer'
                 && interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)
                 ) {
@@ -110,10 +188,10 @@ export function synchroInterventions(user) {
             }
         });
         interventionsDb.forEach(interventionDb => {
-            let interventionApi = interventionsApi.find( intervention => intervention[structureIntervention.roid.index] === interventionDb.roid);
-            if(typeof interventionApi === "undefined"
-            && interventionDb.statut != 'termineeatransferer'
-            && interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)
+            let interventionApi = interventionsApi.find( intervention => intervention[structureInterventionDb.roid.index] === interventionDb.roid);
+            if(typeof interventionApi === "undefined" // Pas dans les inters envoyées par l'api
+            && interventionDb.statut != 'termineeatransferer' // termineeatransferer => on doit la transférer d'abord
+            && (interventionDb.statut != 'terminee' || interventionDb.maj_local.substring(0, 10) != new Date().toISOString().substring(0, 10)) // Inter à faire et faite sur un autre téléphone, ou inter terminée sur ce téléphone le jour même
             ) {
                 log(user, "info", " >>> SYNCHRO INTERVENTIONS::INTERVENTIONS API / DB, À ASUPPRIMER CAS 2 : "+interventionDb.id);
                 interventionsASupprimer.push(interventionDb.id);
@@ -125,7 +203,7 @@ export function synchroInterventions(user) {
         // LOG
         let roids = [];
         interventionsACreer.forEach( itv => roids.push(itv[1]));
-        log(user, "info", " >>> SYNCHRO INTERVENTIONS::APPAREILLAGE INTERVENTIONS API / DB done, now : création db des interventions manquantes ("+interventionsACreer.length+"), roids = "+roids.join(", "));
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::APPAREILLAGE INTERVENTIONS API / DB done, now : création db des interventions manquantes ("+interventionsACreer.length+"), roids = "+(roids.length > 0 ? roids.join(", ") : "none"));
         // END LOG
         return insertRows('intervention', interventionsACreer);
     })
@@ -134,15 +212,16 @@ export function synchroInterventions(user) {
         return deleteIds('intervention', interventionsASupprimer);
     })
     .then( () => {
-        log(user, "info", " >>> SYNCHRO INTERVENTIONS::END OK, now returns done");
+        log(user, "info", " >>> SYNCHRO INTERVENTIONS::END OK, now returns \"done\"");
         synchroInterventionsEncours = false;
         return "done";
     })
     .catch( error => {
-        log(user, "error", ">>> SYNCHRO INTERVENTIONS::CATCH ERROR"+typeof error == "string" ? error : error.toString());
+        log(user, "error", ">>> SYNCHRO INTERVENTIONS::CATCH ERROR : "+error.message);
         synchroInterventionsEncours = false;
-        return "done";
+        throw error;
     })
+    .finally( () => synchroInterventionsEncours = false )
     ;
 
 }

@@ -1,11 +1,5 @@
 import {createTables, insertRows} from '../db/db';
 
-var getStackTrace = function() {
-    var obj = {};
-    Error.captureStackTrace(obj, getStackTrace);
-    return obj.stack;
-};
-
 export function log(user, logType, logEntry, consoleLog = true) {
 
     if(consoleLog) {

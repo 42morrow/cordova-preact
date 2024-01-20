@@ -60,10 +60,32 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
 
     function getHeure(intervention) {
         if(intervention.heure != null && intervention.heure != '23:59') {
-            return <div><i class="fas fa-clock mr-1"></i>{intervention.heure}</div>;
+            return <span class=""><i class="fas fa-clock mr-1"></i>{intervention.heure}</span>;
         }
         else {
-            return <div class="color-silver">Horaire non précisé</div>;
+            return <span class="color-silver">Horaire non précisé</span>;
+        }
+    }
+
+    function getPrecisionsSalon(intervention) {
+        if(intervention.precisions_salon != null) {
+            return  <div class="row">
+                        <div class="col-md-12 text-left mb-2">
+                            <span class="mr-1">Précisions salon</span>
+                            <span class=" color-aaa">{intervention.precisions_salon}</span>
+                        </div>
+                    </div>
+        }
+    }
+
+    function getPrecisionsIntervention(intervention) {
+        if(intervention.precisions != null) {
+            return  <div class="row">
+                        <div class="col-md-12 text-left mb-2">
+                            <span class="mr-1">Précisions intervention</span>
+                            <span class=" color-aaa">{intervention.precisions}</span>
+                        </div>
+                    </div>
         }
     }
 
@@ -90,7 +112,7 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
                         >
                             <div class="row">
                                 <div class="col-md-8 text-left mb-2">
-                                    <div>{getHeure(intervention)}</div>
+                                    <div>{getHeure(intervention)} <span class="ml-3">N°</span><span class="color-aaa">{intervention.roid}</span></div>
                                     <div>{intervention.client}</div>
                                     <div class="font-italic color-aaa">{intervention.type_label}</div>
                                 </div>
@@ -100,6 +122,27 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="row">
+                                <div class="col-md-12 text-left mb-2">
+                                    <span class="mr-1">Hall</span>
+                                    <span class=" color-aaa">{intervention.hall != null ? intervention.hall : 'non précisé'}</span>
+                                    <span class="ml-3 mr-1">Stand</span>
+                                    <span class=" color-aaa">{intervention.stand != null ? intervention.stand : 'non précisé'}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 text-left mb-2">
+                                    <span class="mr-1">Contact</span>
+                                    <span class=" color-aaa">{intervention.contact_salon != null ? intervention.contact_salon : 'non précisé'}</span>
+                                    <span class="ml-3 mr-1">Téléphone</span>
+                                    <span class=" color-aaa">{intervention.telephone != null ? intervention.telephone : 'non précisé'}</span>
+                                </div>
+                            </div>
+
+                            {getPrecisionsSalon(intervention)}
+
+                            {getPrecisionsIntervention(intervention)}
 
                                 {!!(intervention.signature != null) ?
                                     <div class="mt-2 ">

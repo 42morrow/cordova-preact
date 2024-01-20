@@ -35,6 +35,7 @@ import Intervention from './pages/intervention';
 import Dump from './pages/dump';
 import Query from './pages/query';
 import Log from './pages/log';
+import Erreur from './pages/erreur';
 
 import { createTables, dbGetUser, getTables } from './db/db';
 
@@ -53,7 +54,7 @@ function App() {
     }, []);
 
     window.onError = function(error, url, line) {
-        log(user, "error", error+", url "+url+", line "+line);
+        log(user, "IN APP.JS >>> window.onError, error : ", error.message+", url "+url+", line "+line);
     };
 
     const [syncIsFinished, setSyncIsFinished] = useState(true);
@@ -66,11 +67,25 @@ function App() {
         setBtnSyncIsClicked(true);
     }
 
+    /*
+    function callSetFatalError(error) {
+        setFatalError(error);
+    }
+    */
 
+
+    const [fatalError, setFatalError] = useState(null);
     const [btnSyncIsClicked, setBtnSyncIsClicked] = useState(false);
     const [callSync, setCallSync] = useState(false);
     const [synchroInterventionsDone, setSynchroInterventionsDone] = useState(false);
     const [user, setUser] = useState(null);
+
+
+    useEffect(() => {
+        if(fatalError != null) {
+            route('/erreur');
+        }
+    }, [fatalError]);
 
 
     useEffect(() => {
@@ -134,7 +149,11 @@ function App() {
                 .then( () => {
                     //setSynchroInterventionsDone(false);
                 } )
-                .catch( (error) => { log(user, "error", typeof error == "string" ? error : error.toString()); })
+                .catch( (error) => {
+                    log(user, "error", "IN APP.JS >>> ERREUR DANS LES SYNCHROS : "+error.message);
+                    changeSyncIsFinished(true);
+                    setFatalError(error);
+                })
                 ;
             }
             else {
@@ -212,9 +231,10 @@ function App() {
                     <Salons user={user} synchroInterventionsDone={synchroInterventionsDone} path="/index.html" />
                     <Interventions user={user} synchroInterventionsDone={synchroInterventionsDone} path="/interventions/:salonId" />
                     <Intervention user={user} path="/intervention/:salonId/:salonNbInterventions/:interventionId" />
-                    <Dump path="/dump" />
-                    <Query callUpdateUser={callUpdateUser} path="/query" />
+                    <Dump user={user} path="/dump" />
+                    <Query user={user} callUpdateUser={callUpdateUser} path="/query" />
                     <Log user={user} path="/log" />
+                    <Erreur user={user} fatalError={fatalError} path="/erreur" />
                 </Router>
             </div>
             <Footer />
