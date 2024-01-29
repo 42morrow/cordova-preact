@@ -1,6 +1,7 @@
 import {h} from 'preact';
 import {useState, useEffect} from 'preact/hooks';
 import {Link, route} from 'preact-router';
+import $ from 'jquery';
 
 import {dbGetInterventionsSalon, dbGetSalon} from '../db/db';
 import {statutsIntervention} from '../config/statutsIntervention';
@@ -34,27 +35,26 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
 
     useEffect(() => {
 
-        //if(synchroInterventionsDone) {
-            dbGetInterventionsSalon(salonId).then( (interventionsDuSalon) => {
-                setSalonNbInterventions(interventionsDuSalon.length);
-                log(user, "info", "IN INTERVENTIONS >>> setInterventions : "+interventionsDuSalon.length);
-                let interventionsParDate = {};
-                interventionsDuSalon.map( intervention => {
-                    if(!interventionsParDate.hasOwnProperty(intervention.date)) {
-                        interventionsParDate[intervention.date] = [];
-                    }
-                    interventionsParDate[intervention.date].push(intervention);
-                });
-                const interventionsParDateOrdonnee = Object.keys(interventionsParDate).sort().reduce(
-                    (obj, key) => {
-                      obj[key.split("-").reverse().join("/")] = interventionsParDate[key];
-                      return obj;
-                    },
-                    {}
-                );
-                setInterventions(interventionsParDateOrdonnee);
+        dbGetInterventionsSalon(salonId).then( (interventionsDuSalon) => {
+            setSalonNbInterventions(interventionsDuSalon.length);
+            log(user, "info", "IN INTERVENTIONS >>> setInterventions : "+interventionsDuSalon.length);
+            let interventionsParDate = {};
+            interventionsDuSalon.map( intervention => {
+                if(!interventionsParDate.hasOwnProperty(intervention.date)) {
+                    interventionsParDate[intervention.date] = [];
+                }
+                interventionsParDate[intervention.date].push(intervention);
             });
-        //}
+            const interventionsParDateOrdonnee = Object.keys(interventionsParDate).sort().reduce(
+                (obj, key) => {
+                    obj[key.split("-").reverse().join("/")] = interventionsParDate[key];
+                    return obj;
+                },
+                {}
+            );
+            setInterventions(interventionsParDateOrdonnee);
+        });
+
     }, [synchroInterventionsDone, init]);
 
 
@@ -89,6 +89,13 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
         }
     }
 
+    function toggleDate(caller) {
+        let date = $(caller).prop("tagName") == "SPAN" ? $(caller).parent().attr("data-date") : $(caller).attr("data-date");
+        $(".inter-date-"+date).each(function() {
+            $(this).toggleClass("d-none");
+        });
+    }
+
     if(!interventions || !salon) {
         return <div className="text-center p-3">Veuillez patienter <span class="color-silver">(interventions)</span></div>
     }
@@ -104,10 +111,22 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
             {!!(interventions && Object.keys(interventions).length > 0) ?
             Object.keys(interventions).map( (uneDate) => (
                 <div>
-                    <div class="badge badge-secondary mb-1">{uneDate}</div>
+                    <div
+                        class="badge badge-secondary font-size-1em mb-2 py-3 w-100"
+                        data-date={uneDate.replaceAll("/", "")}
+                        onClick={ (e) => {toggleDate(e.target)} }
+                        role="button"
+                    >
+                        {uneDate}
+                        <span
+                            class="font-weight-normal ml-2"
+                        >
+                            ({interventions[uneDate].length})
+                        </span>
+                    </div>
                     {interventions[uneDate].map(intervention  => (
                         <Link
-                            class={`btn  ${statutsIntervention[intervention.statut].class} w-100 p-3 mb-2`}
+                            class={`btn inter-date-${uneDate.replaceAll("/", "")} ${statutsIntervention[intervention.statut].class} w-100 p-3 mb-2 d-none`}
                             href={'/intervention/'+salonId+"/"+salonNbInterventions+"/"+intervention.id}
                         >
                             <div class="row">
@@ -116,7 +135,7 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
                                     <div>{intervention.client}</div>
                                     <div class="font-italic color-aaa">{intervention.type_label}</div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-4 mb-2">
                                     <div class={`statut w-100 ${statutsIntervention[intervention.statut].couleur}`}>
                                         {statutsIntervention[intervention.statut].libelle}
                                     </div>
@@ -135,7 +154,11 @@ export default function Interventions({user, salonId, synchroInterventionsDone})
                                 <div class="col-md-12 text-left mb-2">
                                     <span class="mr-1">Contact</span>
                                     <span class=" color-aaa">{intervention.contact_salon != null ? intervention.contact_salon : 'non précisé'}</span>
-                                    <span class="ml-3 mr-1">Téléphone</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 text-left mb-2">
+                                    <span class="mr-1">Téléphone</span>
                                     <span class=" color-aaa">{intervention.telephone != null ? intervention.telephone : 'non précisé'}</span>
                                 </div>
                             </div>

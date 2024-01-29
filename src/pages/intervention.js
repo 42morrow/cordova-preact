@@ -39,6 +39,7 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
             survey.applyTheme(surveyjsTheme);
             setSurvey(survey);
             setSurveyjsJsonQuestions(surveyjsJsonQuestions);
+            log(user, "info", "IN INTERVENTION >>> surveyjsJsonQuestions : "+(surveyjsJsonQuestions == null ? "null" : surveyjsJsonQuestions));
             log(user, "info", "IN INTERVENTION >>> surveyjsJsonQuestions done");
         });
 
@@ -53,15 +54,11 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
 
         survey.onComplete.add((sender, options) => {
             let majLocal = new Date().toISOString();
-console.log("sender.DATA");
-console.log(JSON.stringify(sender.data));
             let dbFields = {
                 surveyjs_json_reponses: JSON.stringify(sender.data).replace(/'/g, ' '),
                 statut: 'termineeatransferer',
                 maj_local: majLocal,
             };
-console.log("sender.DATA AFTER");
-console.log(JSON.stringify(sender.data).replace(/'/g, "\\'"));
             update('intervention', interventionId, dbFields)
             .then( () => {
                 log(user, "info", "IN INTERVENTION >>> maj intervention DB (statut termineeatransferer) done");

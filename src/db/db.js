@@ -308,7 +308,7 @@ export function dbGetInterventionsSalon(salonId) {
 
     tx = helper.newBatchTransaction();
     return tx.commit().then(function() {
-        return helper.executeStatement('SELECT * FROM intervention WHERE salon_id = ? ORDER BY date, heure', [salonId]);
+        return helper.executeStatement('SELECT * FROM intervention WHERE salon_id = ? ORDER BY date, heure, client', [salonId]);
 
     }).then(function(res) {
         var interventions = [];
