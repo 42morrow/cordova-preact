@@ -35,10 +35,12 @@ export default function Intervention({user, salonId, salonNbInterventions, inter
             return dbGetSurveyjsConfig(itv.surveyjs_id);
         })
         .then( (surveyjsJsonQuestions) => {
-            const survey = new Survey.Model(surveyjsJsonQuestions);
-            survey.applyTheme(surveyjsTheme);
-            setSurvey(survey);
-            setSurveyjsJsonQuestions(surveyjsJsonQuestions);
+            if(surveyjsJsonQuestions != null) {
+                const survey = new Survey.Model(surveyjsJsonQuestions);
+                survey.applyTheme(surveyjsTheme);
+                setSurvey(survey);
+                setSurveyjsJsonQuestions(surveyjsJsonQuestions);
+            }
             log(user, "info", "IN INTERVENTION >>> surveyjsJsonQuestions : "+(surveyjsJsonQuestions == null ? "null" : surveyjsJsonQuestions));
             log(user, "info", "IN INTERVENTION >>> surveyjsJsonQuestions done");
         });
